@@ -36,6 +36,11 @@ jobs:
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/alarms/AlarmHubActivity.java
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/wellness/HealthHubActivity.kt
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/widgets/WidgetStudioActivity.java
+          cat > ExamVerse-v2/gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=false
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          EOF
 
       - uses: actions/setup-java@v5
         with:
