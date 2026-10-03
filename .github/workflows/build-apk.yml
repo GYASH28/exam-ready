@@ -32,6 +32,8 @@ jobs:
         run: |
           cat .examverse-v3/overlay.b64.part* | base64 --decode > ExamVerse-v3-overlay.tar.gz
           tar -xzf ExamVerse-v3-overlay.tar.gz -C ExamVerse-v2
+          # Health Connect 1.1.0 stable keeps the v3 health features compatible with API 35 / AGP 8.7.
+          sed -i 's/androidx.health.connect:connect-client:1.2.0-alpha06/androidx.health.connect:connect-client:1.1.0/' ExamVerse-v2/app/build.gradle
           grep -q "versionName.*3.0.0" ExamVerse-v2/app/build.gradle
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/alarms/AlarmHubActivity.java
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/wellness/HealthHubActivity.kt
