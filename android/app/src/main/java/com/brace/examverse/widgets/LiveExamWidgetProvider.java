@@ -29,8 +29,8 @@ public class LiveExamWidgetProvider extends AppWidgetProvider {
                 rv.setChronometer(R.id.widget_chronometer, SystemClock.elapsedRealtime(), "00:00:00", false); rv.setTextViewText(R.id.widget_date, "Open ExamVerse to add an exam");
             } else {
                 long base = SystemClock.elapsedRealtime() + (exam.timeMillis - System.currentTimeMillis());
-                rv.setTextViewText(R.id.widget_kicker, exam.subject.toUpperCase()); rv.setTextViewText(R.id.widget_title, exam.title);
-                rv.setChronometer(R.id.widget_chronometer, base, null, true); rv.setChronometerCountDown(R.id.widget_chronometer, true); rv.setTextViewText(R.id.widget_date, WidgetUtil.date(exam.timeMillis));
+                rv.setTextViewText(R.id.widget_kicker, exam.subject.toUpperCase() + "  ·  " + repo.readinessForExam(exam.id) + "% READY"); rv.setTextViewText(R.id.widget_title, exam.title);
+                rv.setChronometer(R.id.widget_chronometer, base, null, true); rv.setChronometerCountDown(R.id.widget_chronometer, true); rv.setTextViewText(R.id.widget_date, WidgetUtil.date(exam.timeMillis) + "  ·  priority " + exam.priority);
             }
             m.updateAppWidget(id, rv);
         }
