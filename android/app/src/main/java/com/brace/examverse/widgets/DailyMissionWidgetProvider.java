@@ -24,7 +24,7 @@ public class DailyMissionWidgetProvider extends AppWidgetProvider {
             rv.setTextViewText(R.id.widget_title, today + " / " + goal + " focused minutes");
             rv.setProgressBar(R.id.widget_progress, 100, pct, false);
             rv.setTextViewText(R.id.widget_countdown, pending == 0 ? "Mission board clear" : pending + (pending == 1 ? " revision mission today" : " revision missions today"));
-            rv.setTextViewText(R.id.widget_date, repo.getStreak() + " day streak · Level " + repo.getLevel());
+            rv.setTextViewText(R.id.widget_date, repo.getStreak() + "d streak  ·  " + repo.averageReadiness() + "% avg readiness  ·  LV " + repo.getLevel());
             m.updateAppWidget(id, rv);
         }
     }
