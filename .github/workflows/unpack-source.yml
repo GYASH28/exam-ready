@@ -1,0 +1,54 @@
+name: Unpack ExamVerse source for v4 work
+
+on:
+  push:
+    branches:
+      - upgrade/max-ui-v4
+    paths:
+      - '.github/workflows/unpack-source.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: upgrade/max-ui-v4
+          fetch-depth: 0
+
+      - name: Reconstruct v3 source tree
+        run: |
+          rm -rf /tmp/examverse-unpack android
+          mkdir -p /tmp/examverse-unpack
+          cat .examverse/source.b64.part* | base64 --decode > /tmp/examverse-unpack/base.zip
+          unzip -q /tmp/examverse-unpack/base.zip -d /tmp/examverse-unpack
+          cat .examverse-v3/overlay.b64.part* | base64 --decode > /tmp/examverse-unpack/overlay.tar.gz
+          tar -xzf /tmp/examverse-unpack/overlay.tar.gz -C /tmp/examverse-unpack/ExamVerse-v2
+
+          mv /tmp/examverse-unpack/ExamVerse-v2 android
+
+          sed -i 's/androidx.health.connect:connect-client:1.2.0-alpha06/androidx.health.connect:connect-client:1.1.0/' android/app/build.gradle || true
+          sed -i "s/com.android.application' version '8.7.3'/com.android.application' version '8.10.1'/" android/build.gradle || true
+          sed -i 's/compileSdk 35/compileSdk 36/' android/app/build.gradle || true
+          sed -i 's/androidx.health.connect.client.aggregate.AggregateRequest/androidx.health.connect.client.request.AggregateRequest/' android/app/src/main/java/com/brace/examverse/wellness/HealthHubActivity.kt || true
+
+          cat > android/gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=false
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          EOF
+
+          test -f android/settings.gradle
+          test -f android/app/build.gradle
+          test -f android/app/src/main/AndroidManifest.xml
+
+      - name: Commit unpacked source
+        run: |
+          git config user.name "examverse-upgrade-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add android
+          git commit -m "chore: unpack ExamVerse v3 source for v4 development"
+          git push origin HEAD:upgrade/max-ui-v4
