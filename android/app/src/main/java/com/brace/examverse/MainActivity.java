@@ -589,29 +589,156 @@ public class MainActivity extends Activity {
     private void finishFocusEarly(){long elapsed=focusPresetMs-focusRemainingMs;int mins=(int)(elapsed/60_000L);if(mins<1){Toast.makeText(this,"Study for at least one minute before logging",Toast.LENGTH_SHORT).show();return;}pauseFocus();repo.recordFocus(mins,focusExamId,focusTopicId,focusMode+" · partial");focusRemainingMs=focusPresetMs;Toast.makeText(this,mins+" focused minutes logged",Toast.LENGTH_SHORT).show();renderCurrentPage();}
 
     // ---------------- Life OS: screen time + health + study intelligence ----------------
-    private View buildLifePage(){
-        ThemeManager.Palette p=ThemeManager.palette(this);ScrollView scroll=new ScrollView(this);LinearLayout box=column();box.setPadding(0,dp(8),0,dp(24));scroll.addView(box);
-        box.addView(text("Life OS",24,p.text,true));box.addView(text("Study effort beside your real device usage and recovery context — all permission based.",12.5f,p.muted,false),top(3));
+    private View buildLifePage() {
+        ThemeManager.Palette p = ThemeManager.palette(this);
+        ScrollView scroll = new ScrollView(this);
+        scroll.setClipToPadding(false);
+        LinearLayout box = column();
+        box.setPadding(0, dp(7), 0, dp(26));
+        scroll.addView(box);
 
-        sectionTitle(box,"Digital wellbeing","Screen time comes from Android Usage Access and stays on-device.",p);
-        if(!ScreenTimeManager.hasUsageAccess(this)){
-            LinearLayout permission=card();permission.addView(text("Screen-time access is off",15,p.text,true));permission.addView(text("Enable Usage Access to see today's screen time, unlock count and top-used apps.",11.5f,p.muted,false),top(4));Button grant=actionButton("Enable screen-time access",p.primary,contrastText(p.primary));grant.setOnClickListener(v->ScreenTimeManager.openUsageAccessSettings(this));permission.addView(grant,topHeight(11,48));box.addView(permission);
-        }else{
-            ScreenTimeManager.Snapshot st=ScreenTimeManager.today(this);LinearLayout stats=new LinearLayout(this);stats.setOrientation(LinearLayout.HORIZONTAL);stats.addView(statTile("SCREEN",ScreenTimeManager.formatDuration(st.screenInteractiveMillis),"today",p),weightMargin(1f,0,4));stats.addView(statTile("UNLOCKS",String.valueOf(st.unlocks),"today",p),weightMargin(1f,0,4));stats.addView(statTile("FOCUS",repo.focusMinutesToday()+"m","ExamVerse",p),weightMargin(1f,0,0));box.addView(stats);
-            if(!st.topApps.isEmpty()){LinearLayout apps=card();apps.addView(text("Top apps today",14,p.text,true));int max=(int)Math.min(5,st.topApps.size());for(int i=0;i<max;i++){ScreenTimeManager.AppUsage u=st.topApps.get(i);LinearLayout r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);r.setPadding(0,dp(8),0,dp(4));r.addView(text((i+1)+"  "+u.label,12.5f,p.text,i==0),new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));r.addView(text(ScreenTimeManager.formatDuration(u.millis),12,p.primary,true));apps.addView(r);}box.addView(apps,top(10));}
+        TextView kicker = text("BALANCE OS", 10, p.primary, true);
+        kicker.setLetterSpacing(.14f);
+        box.addView(kicker);
+        box.addView(text("Study load meets real life.", 24, p.text, true), top(2));
+        box.addView(text("Screen time and recovery context stay permission-based. ExamVerse works fully even when you keep them disconnected.", 11.7f, p.muted, false), top(3));
+
+        boolean hasUsage = ScreenTimeManager.hasUsageAccess(this);
+        ScreenTimeManager.Snapshot st = hasUsage ? ScreenTimeManager.today(this) : null;
+
+        LinearLayout balanceHero = column();
+        balanceHero.setPadding(dp(18), dp(17), dp(18), dp(17));
+        balanceHero.setBackground(ThemeManager.hero(this, dp(28)));
+        balanceHero.setElevation(dp(4));
+
+        LinearLayout bh = new LinearLayout(this);
+        bh.setOrientation(LinearLayout.HORIZONTAL);
+        bh.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout bht = column();
+        bht.addView(text("TODAY'S BALANCE", 10, Color.WHITE, true));
+        bht.addView(text(repo.focusMinutesToday() + " focused minutes", 25, Color.WHITE, true), top(4));
+        String balanceSub;
+        if (hasUsage && st != null) {
+            balanceSub = ScreenTimeManager.formatDuration(st.screenInteractiveMillis) + " screen time  ·  " + st.unlocks + " unlocks";
+        } else {
+            balanceSub = "Connect screen-time access for device context";
+        }
+        TextView bs = text(balanceSub, 10.8f, Color.WHITE, false);
+        bs.setAlpha(.82f);
+        bht.addView(bs, top(3));
+        bh.addView(bht, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView streak = text(repo.getStreak() + "d\nstreak", 11.5f, Color.WHITE, true);
+        streak.setGravity(Gravity.CENTER);
+        streak.setPadding(dp(11), dp(8), dp(11), dp(8));
+        streak.setBackground(ThemeManager.outlined(alpha(Color.BLACK, 24), alpha(Color.WHITE, 62), dp(17), dp(1)));
+        bh.addView(streak);
+        balanceHero.addView(bh);
+        box.addView(balanceHero, top(12));
+
+        sectionTitle(box, "Digital wellbeing", "Android Usage Access powers this view locally on your phone.", p);
+        if (!hasUsage) {
+            LinearLayout permission = card();
+            LinearLayout titleRow = new LinearLayout(this);
+            titleRow.setOrientation(LinearLayout.HORIZONTAL);
+            titleRow.setGravity(Gravity.CENTER_VERTICAL);
+            TextView lock = text("◌", 25, p.primary, true);
+            titleRow.addView(lock, new LinearLayout.LayoutParams(dp(38), dp(38)));
+            LinearLayout pt = column();
+            pt.addView(text("Screen-time access is off", 15, p.text, true));
+            pt.addView(text("Optional · can be removed anytime in Android settings", 10.2f, p.muted, false), top(2));
+            titleRow.addView(pt, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            permission.addView(titleRow);
+            permission.addView(text("Turn it on to see today's screen time, unlock count and top-used apps next to your study data.", 11.5f, p.muted, false), top(9));
+            Button grant = actionButton("Open Usage Access settings", p.primary, contrastText(p.primary));
+            grant.setOnClickListener(v -> ScreenTimeManager.openUsageAccessSettings(this));
+            permission.addView(grant, topHeight(12, 48));
+            box.addView(permission);
+        } else if (st != null) {
+            LinearLayout stats = new LinearLayout(this);
+            stats.setOrientation(LinearLayout.HORIZONTAL);
+            stats.addView(statTile("SCREEN", ScreenTimeManager.formatDuration(st.screenInteractiveMillis), "today", p), weightMargin(1f, 0, 5));
+            stats.addView(statTile("UNLOCKS", String.valueOf(st.unlocks), "today", p), weightMargin(1f, 0, 5));
+            stats.addView(statTile("FOCUS", repo.focusMinutesToday() + "m", "ExamVerse", p), weightMargin(1f, 0, 0));
+            box.addView(stats);
+
+            if (!st.topApps.isEmpty()) {
+                LinearLayout apps = card();
+                LinearLayout ah = new LinearLayout(this);
+                ah.setOrientation(LinearLayout.HORIZONTAL);
+                ah.setGravity(Gravity.CENTER_VERTICAL);
+                ah.addView(text("Top apps today", 14.5f, p.text, true), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                ah.addView(text("local data", 9.5f, p.muted, true));
+                apps.addView(ah);
+
+                long maxUsage = Math.max(1, st.topApps.get(0).millis);
+                int max = Math.min(5, st.topApps.size());
+                for (int i = 0; i < max; i++) {
+                    ScreenTimeManager.AppUsage u = st.topApps.get(i);
+                    LinearLayout appRow = column();
+                    LinearLayout textRow = new LinearLayout(this);
+                    textRow.setOrientation(LinearLayout.HORIZONTAL);
+                    textRow.setGravity(Gravity.CENTER_VERTICAL);
+                    textRow.addView(text((i + 1) + "  " + u.label, 11.8f, p.text, i == 0), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                    textRow.addView(text(ScreenTimeManager.formatDuration(u.millis), 10.8f, p.primary, true));
+                    appRow.addView(textRow);
+                    appRow.addView(progress(Math.round(u.millis * 100f / maxUsage), p.primary), topHeight(5, 5));
+                    apps.addView(appRow, top(9));
+                }
+                box.addView(apps, top(10));
+            }
         }
 
-        sectionTitle(box,"Health & recovery","Optional Health Connect context. You decide which categories ExamVerse can read.",p);
-        LinearLayout health=card();boolean connected=HealthSnapshotStore.isConnected(this);
-        if(connected){long sm=HealthSnapshotStore.sleepMinutes(this);LinearLayout hs=new LinearLayout(this);hs.setOrientation(LinearLayout.HORIZONTAL);hs.addView(statTile("STEPS",String.valueOf(HealthSnapshotStore.steps(this)),"today",p),weightMargin(1f,0,4));hs.addView(statTile("SLEEP",(sm/60)+"h "+(sm%60)+"m","recent",p),weightMargin(1f,0,4));hs.addView(statTile("HEART",Math.round(HealthSnapshotStore.heartBpm(this))+" bpm","avg",p),weightMargin(1f,0,0));health.addView(hs);health.addView(text(Math.round(HealthSnapshotStore.calories(this))+" kcal · "+HealthSnapshotStore.exerciseMinutes(this)+" min exercise",11.5f,p.muted,false),top(8));}
-        else health.addView(text("Health Connect is not connected yet.",13,p.muted,false));
-        Button sync=actionButton(connected?"Manage / sync health":"Connect Health Connect",p.surfaceAlt,p.text);sync.setOnClickListener(v->startActivity(new Intent(this,HealthHubActivity.class)));health.addView(sync,topHeight(10,48));box.addView(health);
+        sectionTitle(box, "Health & recovery", "Optional Health Connect context — you choose each health category.", p);
+        LinearLayout health = card();
+        boolean connected = HealthSnapshotStore.isConnected(this);
 
-        sectionTitle(box,"Study intelligence","Focus trends and exam readiness stay part of the same dashboard.",p);
-        LinearLayout rank=card();rank.setBackground(ThemeManager.gradient(p.primary,p.secondary,dp(24)));int xp=repo.getXp(),lvl=repo.getLevel();rank.addView(text("LEVEL "+lvl+" · "+ThemeManager.rankName(this,lvl),11,contrastText(p.primary),true));rank.addView(text(xp+" XP",27,contrastText(p.primary),true),top(3));rank.addView(text(repo.getStreak()+" day streak · "+repo.getSessions().size()+" sessions · "+repo.getFocusMinutes()+" total focused min",11,contrastText(p.primary),false),top(3));box.addView(rank);
-        List<Exam> exams=repo.getUpcomingExams();for(int i=0;i<Math.min(3,exams.size());i++){Exam e=exams.get(i);int ready=repo.readinessForExam(e.id);LinearLayout c=card();LinearLayout r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);r.addView(text(e.subject,13,p.text,true),new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));r.addView(text(ready+"% ready",13,ready>=70?p.success:p.primary,true));c.addView(r);c.addView(progress(ready,ready>=70?p.success:p.primary),topHeight(7,7));box.addView(c,top(8));}
+        if (connected) {
+            long sm = HealthSnapshotStore.sleepMinutes(this);
+            LinearLayout hs = new LinearLayout(this);
+            hs.setOrientation(LinearLayout.HORIZONTAL);
+            hs.addView(statTile("STEPS", String.valueOf(HealthSnapshotStore.steps(this)), "today", p), weightMargin(1f, 0, 5));
+            hs.addView(statTile("SLEEP", (sm / 60) + "h " + (sm % 60) + "m", "recent", p), weightMargin(1f, 0, 5));
+            hs.addView(statTile("HEART", Math.round(HealthSnapshotStore.heartBpm(this)) + " bpm", "average", p), weightMargin(1f, 0, 0));
+            health.addView(hs);
+            health.addView(text(Math.round(HealthSnapshotStore.calories(this)) + " kcal burned  ·  " + HealthSnapshotStore.exerciseMinutes(this) + " min exercise", 10.8f, p.muted, false), top(9));
+            long updated = HealthSnapshotStore.updatedAt(this);
+            if (updated > 0) health.addView(text("Last health sync  " + new SimpleDateFormat("h:mm a", Locale.getDefault()).format(new Date(updated)), 9.8f, p.muted, false), top(3));
+        } else {
+            health.addView(text("Health Connect is not connected", 14.5f, p.text, true));
+            health.addView(text("Steps, sleep, heart rate, calories and exercise can appear here after you explicitly grant access.", 11.2f, p.muted, false), top(4));
+        }
+
+        Button sync = actionButton(connected ? "Manage / sync Health Connect" : "Connect Health Connect", p.surfaceAlt, p.text);
+        sync.setOnClickListener(v -> startActivity(new Intent(this, HealthHubActivity.class)));
+        health.addView(sync, topHeight(11, 48));
+        box.addView(health);
+
+        sectionTitle(box, "Readiness pulse", "A compact look at how your current study effort is translating into exam readiness.", p);
+        LinearLayout pulse = card();
+        LinearLayout pulseTop = new LinearLayout(this);
+        pulseTop.setOrientation(LinearLayout.HORIZONTAL);
+        pulseTop.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout pulseText = column();
+        pulseText.addView(text(repo.averageReadiness() + "% average readiness", 18, p.text, true));
+        pulseText.addView(text(repo.examsNeedingAttention() == 0 ? "No urgent readiness gaps detected" : repo.examsNeedingAttention() + " exam" + (repo.examsNeedingAttention() == 1 ? "" : "s") + " need attention soon", 10.5f, p.muted, false), top(2));
+        pulseTop.addView(pulseText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView level = text("LV " + repo.getLevel(), 12, p.primary, true);
+        level.setPadding(dp(10), dp(7), dp(10), dp(7));
+        level.setBackground(ThemeManager.glowChip(this, dp(15)));
+        pulseTop.addView(level);
+        pulse.addView(pulseTop);
+        pulse.addView(progress(repo.averageReadiness(), repo.averageReadiness() >= 70 ? p.success : p.primary), topHeight(10, 8));
+        pulse.addView(text(repo.getSessions().size() + " sessions  ·  " + repo.getFocusMinutes() + " total focus min  ·  " + repo.activeDaysLast28() + "/28 active days", 10.5f, p.muted, false), top(7));
+        box.addView(pulse);
+
+        TextView privacy = text("ExamVerse never needs screen-time or Health Connect access to run the planner. Those permissions only enrich this Balance OS screen.", 9.8f, p.muted, false);
+        box.addView(privacy, top(14));
+
         return scroll;
     }
+
+    // ---------------- Insights ----------------
 
     // ---------------- Insights ----------------
     private View buildInsightsPage() {
