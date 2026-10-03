@@ -159,7 +159,7 @@ public class ThemeBackdropView extends View {
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(dp(1.2f));
         paint.setColor(ThemeManager.withAlpha(p.accent, 20));
-        float ring = dp(92 + 10 * Math.sin(phase * Math.PI * 2));
+        float ring = dp(92f + 10f * (float) Math.sin(phase * Math.PI * 2));
         c.drawCircle(w * .86f, h * .14f, ring, paint);
 
         paint.setStyle(Paint.Style.FILL);
