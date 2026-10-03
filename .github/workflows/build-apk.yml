@@ -1,11 +1,11 @@
-name: Build ExamVerse v2 APK
+name: Build ExamVerse v3 APK
 
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
     paths:
-      - '.examverse/**'
+      - '.examverse-v3/**'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -21,12 +21,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Reconstruct source archive
+      - name: Reconstruct verified v2 base
         run: |
           cat .examverse/source.b64.part* | base64 --decode > ExamVerse-v2-source.zip
           unzip -q ExamVerse-v2-source.zip
           test -f ExamVerse-v2/settings.gradle
           test -f ExamVerse-v2/app/build.gradle
+
+      - name: Apply ExamVerse v3 upgrade
+        run: |
+          cat .examverse-v3/overlay.b64.part* | base64 --decode > ExamVerse-v3-overlay.tar.gz
+          tar -xzf ExamVerse-v3-overlay.tar.gz -C ExamVerse-v2
+          grep -q 'versionName "3.0.0"' ExamVerse-v2/app/build.gradle
+          test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/alarms/AlarmHubActivity.java
+          test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/wellness/HealthHubActivity.kt
+          test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/widgets/WidgetStudioActivity.java
 
       - uses: actions/setup-java@v5
         with:
@@ -44,19 +53,19 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Compile installable debug APK
+      - name: Compile ExamVerse v3 APK
         working-directory: ExamVerse-v2
         run: gradle :app:assembleDebug --stacktrace
 
-      - name: Prepare APK
+      - name: Verify and prepare APK
         run: |
           mkdir -p dist
-          cp ExamVerse-v2/app/build/outputs/apk/debug/app-debug.apk dist/ExamVerse-v2.0.0.apk
-          sha256sum dist/ExamVerse-v2.0.0.apk > dist/ExamVerse-v2.0.0.apk.sha256
-          unzip -l dist/ExamVerse-v2.0.0.apk | grep -E "AndroidManifest.xml|classes.dex|resources.arsc"
+          cp ExamVerse-v2/app/build/outputs/apk/debug/app-debug.apk dist/ExamVerse-v3.0.0.apk
+          sha256sum dist/ExamVerse-v3.0.0.apk > dist/ExamVerse-v3.0.0.apk.sha256
+          unzip -l dist/ExamVerse-v3.0.0.apk | grep -E "AndroidManifest.xml|classes.dex|resources.arsc"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ExamVerse-v2-installable-apk
+          name: ExamVerse-v3-installable-apk
           path: dist/*
           if-no-files-found: error
