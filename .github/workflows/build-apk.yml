@@ -36,6 +36,7 @@ jobs:
           sed -i 's/androidx.health.connect:connect-client:1.2.0-alpha06/androidx.health.connect:connect-client:1.1.0/' ExamVerse-v2/app/build.gradle
           sed -i "s/com.android.application' version '8.7.3'/com.android.application' version '8.10.1'/" ExamVerse-v2/build.gradle
           sed -i 's/compileSdk 35/compileSdk 36/' ExamVerse-v2/app/build.gradle
+          sed -i 's/androidx.health.connect.client.aggregate.AggregateRequest/androidx.health.connect.client.request.AggregateRequest/' ExamVerse-v2/app/src/main/java/com/brace/examverse/wellness/HealthHubActivity.kt
           grep -q "versionName.*3.0.0" ExamVerse-v2/app/build.gradle
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/alarms/AlarmHubActivity.java
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/wellness/HealthHubActivity.kt
