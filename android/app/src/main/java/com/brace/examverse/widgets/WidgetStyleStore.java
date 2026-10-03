@@ -4,12 +4,62 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 public class WidgetStyleStore {
-    private static final String PREFS="examverse_widget_styles";
+    private static final String PREFS = "examverse_widget_styles";
+
     public static class Style {
-        public String theme; public int opacity; public String density; public long examId;
-        Style(String theme,int opacity,String density,long examId){this.theme=theme;this.opacity=opacity;this.density=density;this.examId=examId;}
+        public String theme;
+        public int opacity;
+        public String density;
+        public long examId;
+        public int corner;
+        public int accentStrength;
+
+        Style(String theme, int opacity, String density, long examId, int corner, int accentStrength) {
+            this.theme = theme;
+            this.opacity = opacity;
+            this.density = density;
+            this.examId = examId;
+            this.corner = corner;
+            this.accentStrength = accentStrength;
+        }
     }
-    public static Style get(Context c,int id){SharedPreferences p=c.getSharedPreferences(PREFS,Context.MODE_PRIVATE);return new Style(p.getString("theme_"+id,"auto"),p.getInt("opacity_"+id,170),p.getString("density_"+id,"detailed"),p.getLong("exam_"+id,-1));}
-    public static void save(Context c,int id,String theme,int opacity,String density,long examId){c.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().putString("theme_"+id,theme).putInt("opacity_"+id,Math.max(70,Math.min(235,opacity))).putString("density_"+id,density).putLong("exam_"+id,examId).apply();}
-    public static void delete(Context c,int id){c.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit().remove("theme_"+id).remove("opacity_"+id).remove("density_"+id).remove("exam_"+id).apply();}
+
+    public static Style get(Context c, int id) {
+        SharedPreferences p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return new Style(
+                p.getString("theme_" + id, "auto"),
+                p.getInt("opacity_" + id, 175),
+                p.getString("density_" + id, "detailed"),
+                p.getLong("exam_" + id, -1),
+                p.getInt("corner_" + id, 30),
+                p.getInt("accent_" + id, 72)
+        );
+    }
+
+    public static void save(Context c, int id, String theme, int opacity, String density, long examId) {
+        Style current = get(c, id);
+        save(c, id, theme, opacity, density, examId, current.corner, current.accentStrength);
+    }
+
+    public static void save(Context c, int id, String theme, int opacity, String density, long examId, int corner, int accentStrength) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putString("theme_" + id, theme)
+                .putInt("opacity_" + id, Math.max(70, Math.min(240, opacity)))
+                .putString("density_" + id, density)
+                .putLong("exam_" + id, examId)
+                .putInt("corner_" + id, Math.max(14, Math.min(48, corner)))
+                .putInt("accent_" + id, Math.max(0, Math.min(100, accentStrength)))
+                .apply();
+    }
+
+    public static void delete(Context c, int id) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .remove("theme_" + id)
+                .remove("opacity_" + id)
+                .remove("density_" + id)
+                .remove("exam_" + id)
+                .remove("corner_" + id)
+                .remove("accent_" + id)
+                .apply();
+    }
 }
