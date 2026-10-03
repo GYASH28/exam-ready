@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ExamVerse</string>
+    <string name="widget_next_name">ExamVerse · Next Exam</string>
+    <string name="widget_live_name">ExamVerse · Live Countdown</string>
+    <string name="widget_upcoming_name">ExamVerse · Upcoming Exams</string>
+    <string name="widget_mission_name">ExamVerse · Daily Mission</string>
+</resources>
