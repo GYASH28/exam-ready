@@ -32,7 +32,7 @@ jobs:
         run: |
           cat .examverse-v3/overlay.b64.part* | base64 --decode > ExamVerse-v3-overlay.tar.gz
           tar -xzf ExamVerse-v3-overlay.tar.gz -C ExamVerse-v2
-          grep -q 'versionName "3.0.0"' ExamVerse-v2/app/build.gradle
+          grep -q "versionName.*3.0.0" ExamVerse-v2/app/build.gradle
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/alarms/AlarmHubActivity.java
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/wellness/HealthHubActivity.kt
           test -f ExamVerse-v2/app/src/main/java/com/brace/examverse/widgets/WidgetStudioActivity.java
