@@ -7,6 +7,7 @@ import android.os.Build;
 import android.view.View;
 import android.view.Window;
 
+import com.brace.examverse.R;
 import com.brace.examverse.data.ExamRepository;
 
 public class ThemeManager {
