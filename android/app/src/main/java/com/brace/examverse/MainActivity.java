@@ -43,6 +43,9 @@ import com.brace.examverse.alarms.CustomAlarmRepository;
 import com.brace.examverse.wellness.ScreenTimeManager;
 import com.brace.examverse.wellness.HealthHubActivity;
 import com.brace.examverse.wellness.HealthSnapshotStore;
+import com.brace.examverse.visuals.FocusTrendView;
+import com.brace.examverse.visuals.StudyDotHeatmapView;
+import com.brace.examverse.visuals.ReadinessDotGraphView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -91,36 +94,88 @@ public class MainActivity extends Activity {
     };
 
     private void renderShell() {
-        ThemeManager.applyWindow(this, getWindow()); ThemeManager.Palette p = ThemeManager.palette(this);
-        FrameLayout outer = new FrameLayout(this); outer.setBackgroundColor(p.bg);
-        outer.addView(new ThemeBackdropView(this), new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout app = column(); app.setPadding(dp(14), dp(7), dp(14), dp(9));
+        ThemeManager.applyWindow(this, getWindow());
+        ThemeManager.Palette p = ThemeManager.palette(this);
+
+        FrameLayout outer = new FrameLayout(this);
+        outer.setBackgroundColor(p.bg);
+        outer.addView(new ThemeBackdropView(this),
+                new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        LinearLayout app = column();
+        app.setPadding(dp(14), dp(6), dp(14), dp(9));
         outer.addView(app, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
         app.addView(buildTopBar());
-        pageContainer = new FrameLayout(this); LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f); cp.topMargin = dp(4); app.addView(pageContainer, cp);
-        app.addView(buildBottomNav()); setContentView(outer); renderCurrentPage();
+
+        pageContainer = new FrameLayout(this);
+        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
+        cp.topMargin = dp(6);
+        app.addView(pageContainer, cp);
+
+        app.addView(buildBottomNav());
+        setContentView(outer);
+        renderCurrentPage();
     }
 
     private View buildTopBar() {
         ThemeManager.Palette p = ThemeManager.palette(this);
-        LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(2), dp(8), dp(2), dp(7));
-        LinearLayout titles = column(); titles.addView(text("ExamVerse", 24, p.text, true)); titles.addView(text(ThemeManager.motivation(this), 11.5f, p.muted, false));
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(4), dp(9), dp(4), dp(8));
+
+        LinearLayout titles = column();
+        TextView brand = text("EXAMVERSE", 10.5f, p.primary, true);
+        brand.setLetterSpacing(.16f);
+        titles.addView(brand);
+        titles.addView(text("Your exam readiness OS", 20.5f, p.text, true), top(1));
+        titles.addView(text(ThemeManager.displayName(this) + "  ·  " + ThemeManager.motivation(this), 10.5f, p.muted, false), top(2));
         row.addView(titles, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        LinearLayout rank = column(); rank.setGravity(Gravity.CENTER); rank.setPadding(dp(11), dp(6), dp(11), dp(6)); rank.setBackground(ThemeManager.outlined(p.surface, alpha(p.primary, 55), dp(18), dp(1)));
-        rank.addView(text("LV " + repo.getLevel(), 12, p.primary, true));
-        TextView rankName = text(ThemeManager.rankName(this, repo.getLevel()), 9.5f, p.muted, true); rankName.setGravity(Gravity.CENTER); rank.addView(rankName);
-        rank.setOnClickListener(v -> { currentTab = 4; renderShell(); }); row.addView(rank);
+
+        LinearLayout rank = column();
+        rank.setGravity(Gravity.CENTER);
+        rank.setPadding(dp(12), dp(7), dp(12), dp(7));
+        rank.setBackground(ThemeManager.glowChip(this, dp(18)));
+        TextView lv = text("LV " + repo.getLevel(), 11.5f, p.primary, true);
+        lv.setGravity(Gravity.CENTER);
+        rank.addView(lv);
+        TextView rankName = text(ThemeManager.rankName(this, repo.getLevel()), 9.3f, p.text, true);
+        rankName.setGravity(Gravity.CENTER);
+        rank.addView(rankName, top(1));
+        rank.setOnClickListener(v -> { currentTab = 4; renderShell(); });
+        row.addView(rank);
         return row;
     }
 
     private View buildBottomNav() {
         ThemeManager.Palette p = ThemeManager.palette(this);
-        LinearLayout nav = new LinearLayout(this); nav.setOrientation(LinearLayout.HORIZONTAL); nav.setPadding(dp(3), dp(4), dp(3), dp(4)); nav.setBackground(ThemeManager.rounded(p.surface, dp(22)));
-        String[] labels = {"⌂\nHome", "✓\nPlan", "⚡\nFocus", "◉\nLife", "✦\nMore"};
+        LinearLayout nav = new LinearLayout(this);
+        nav.setOrientation(LinearLayout.HORIZONTAL);
+        nav.setPadding(dp(5), dp(5), dp(5), dp(5));
+        nav.setBackground(ThemeManager.glass(this, dp(24), true));
+        nav.setElevation(dp(5));
+
+        String[] icons = {"⌂", "✓", "⚡", "◉", "✦"};
+        String[] labels = {"Home", "Plan", "Focus", "Life", "Studio"};
+
         for (int i = 0; i < labels.length; i++) {
-            final int index = i; Button b = new Button(this); b.setText(labels[i]); b.setTextSize(9.5f); b.setAllCaps(false); b.setGravity(Gravity.CENTER);
-            b.setTextColor(currentTab == i ? p.primary : p.muted); b.setTypeface(null, currentTab == i ? Typeface.BOLD : Typeface.NORMAL); b.setBackgroundColor(Color.TRANSPARENT); b.setPadding(0, 0, 0, 0);
-            b.setOnClickListener(v -> { currentTab = index; renderShell(); }); nav.addView(b, new LinearLayout.LayoutParams(0, dp(57), 1f));
+            final int index = i;
+            LinearLayout item = column();
+            item.setGravity(Gravity.CENTER);
+            item.setPadding(dp(3), dp(5), dp(3), dp(5));
+            if (currentTab == i) item.setBackground(ThemeManager.glowChip(this, dp(18)));
+
+            TextView icon = text(icons[i], 16, currentTab == i ? p.primary : p.muted, true);
+            icon.setGravity(Gravity.CENTER);
+            item.addView(icon);
+            TextView label = text(labels[i], 9.2f, currentTab == i ? p.primary : p.muted, currentTab == i);
+            label.setGravity(Gravity.CENTER);
+            item.addView(label, top(1));
+
+            item.setOnClickListener(v -> { currentTab = index; renderShell(); });
+            nav.addView(item, new LinearLayout.LayoutParams(0, dp(58), 1f));
         }
         return nav;
     }
@@ -134,44 +189,147 @@ public class MainActivity extends Activity {
 
     // ---------------- Mission Control ----------------
     private View buildMissionPage() {
-        ThemeManager.Palette p = ThemeManager.palette(this); ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); LinearLayout box = column(); box.setPadding(0, dp(7), 0, dp(20)); scroll.addView(box);
+        ThemeManager.Palette p = ThemeManager.palette(this);
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setClipToPadding(false);
+
+        LinearLayout box = column();
+        box.setPadding(0, dp(5), 0, dp(26));
+        scroll.addView(box);
+
         Exam next = repo.getNextExam();
-        LinearLayout hero = column(); hero.setPadding(dp(20), dp(18), dp(20), dp(18)); hero.setBackground(ThemeManager.gradient(p.primary, p.secondary, dp(28)));
-        TextView eyebrow = text(next == null ? "MISSION CONTROL" : next.subject.toUpperCase(Locale.getDefault()), 11.5f, contrastText(p.primary), true); eyebrow.setAlpha(.78f); hero.addView(eyebrow);
-        hero.addView(text(next == null ? "No active deadline" : next.title, 24, contrastText(p.primary), true), top(5));
-        heroCountdown = text(next == null ? "Add an exam to start" : formatRemaining(next.timeMillis, true), next == null ? 19 : 34, contrastText(p.primary), true); hero.addView(heroCountdown, top(10));
+        int nextReadiness = next == null ? 0 : repo.readinessForExam(next.id);
+
+        LinearLayout hero = column();
+        hero.setPadding(dp(20), dp(18), dp(20), dp(19));
+        hero.setBackground(ThemeManager.hero(this, dp(30)));
+        hero.setElevation(dp(5));
+
+        LinearLayout heroTop = new LinearLayout(this);
+        heroTop.setOrientation(LinearLayout.HORIZONTAL);
+        heroTop.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView eyebrow = text(next == null ? "READINESS MODE" : next.subject.toUpperCase(Locale.getDefault()),
+                10.8f, Color.WHITE, true);
+        eyebrow.setLetterSpacing(.13f);
+        heroTop.addView(eyebrow, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView mode = text(ThemeManager.displayName(this), 9.5f, Color.WHITE, true);
+        mode.setAlpha(.88f);
+        mode.setPadding(dp(9), dp(5), dp(9), dp(5));
+        mode.setBackground(ThemeManager.outlined(alpha(Color.BLACK, 28), alpha(Color.WHITE, 58), dp(14), dp(1)));
+        heroTop.addView(mode);
+        hero.addView(heroTop);
+
+        hero.addView(text(next == null ? "No exam pressure yet" : next.title, 24.5f, Color.WHITE, true), top(7));
+        heroCountdown = text(next == null ? "Create your first exam" : formatRemaining(next.timeMillis, true),
+                next == null ? 18 : 35, Color.WHITE, true);
+        hero.addView(heroCountdown, top(8));
+
         if (next != null) {
-            int readiness = repo.readinessForExam(next.id); LinearLayout meta = new LinearLayout(this); meta.setOrientation(LinearLayout.HORIZONTAL); meta.setGravity(Gravity.CENTER_VERTICAL);
-            TextView when = text(formatDate(next.timeMillis), 11.5f, contrastText(p.primary), false); when.setAlpha(.85f); meta.addView(when, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-            TextView ready = text(readiness + "% ready", 12, contrastText(p.primary), true); ready.setPadding(dp(9), dp(5), dp(9), dp(5)); ready.setBackground(ThemeManager.rounded(alpha(Color.WHITE, 35), dp(14))); meta.addView(ready); hero.addView(meta, top(8));
+            TextView date = text(formatDate(next.timeMillis), 11.2f, Color.WHITE, false);
+            date.setAlpha(.80f);
+            hero.addView(date, top(5));
+
+            LinearLayout readinessRow = new LinearLayout(this);
+            readinessRow.setOrientation(LinearLayout.HORIZONTAL);
+            readinessRow.setGravity(Gravity.CENTER_VERTICAL);
+            TextView ready = text("READINESS  " + nextReadiness + "%", 10.2f, Color.WHITE, true);
+            ready.setLetterSpacing(.06f);
+            readinessRow.addView(ready, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            readinessRow.addView(text("P" + next.priority + "  ·  target " + next.targetScore + "%", 10.2f, Color.WHITE, true));
+            hero.addView(readinessRow, top(12));
+
+            ProgressBar readyBar = progress(nextReadiness, Color.WHITE);
+            hero.addView(readyBar, topHeight(6, 7));
+        } else {
+            Button create = actionButton("Create exam mission", alpha(Color.WHITE, 235), p.heroEnd);
+            create.setOnClickListener(v -> startActivity(new Intent(this, AddExamActivity.class)));
+            hero.addView(create, topHeight(14, 48));
         }
         box.addView(hero);
 
-        LinearLayout quick = new LinearLayout(this); quick.setOrientation(LinearLayout.HORIZONTAL);
-        quick.addView(statTile("TODAY", repo.focusMinutesToday() + "m", "of " + repo.getDailyGoal() + "m", p), weightMargin(1f, 10, 4));
-        quick.addView(statTile("STREAK", repo.getStreak() + "d", "keep it alive", p), weightMargin(1f, 10, 4));
-        quick.addView(statTile("MISSIONS", String.valueOf(repo.pendingTaskCount()), "remaining", p), weightMargin(1f, 10, 0)); box.addView(quick);
+        LinearLayout stats = new LinearLayout(this);
+        stats.setOrientation(LinearLayout.HORIZONTAL);
+        stats.addView(statTile("TODAY", repo.focusMinutesToday() + "m", "goal " + repo.getDailyGoal() + "m", p), weightMargin(1f, 11, 5));
+        stats.addView(statTile("STREAK", repo.getStreak() + "d", "consistency", p), weightMargin(1f, 11, 5));
+        stats.addView(statTile("READY", repo.averageReadiness() + "%", repo.examsNeedingAttention() + " need care", p), weightMargin(1f, 11, 0));
+        box.addView(stats);
 
-        LinearLayout actions = new LinearLayout(this); actions.setOrientation(LinearLayout.HORIZONTAL);
-        Button add = actionButton("＋ Add exam", p.primary, contrastText(p.primary)); add.setOnClickListener(v -> startActivity(new Intent(this, AddExamActivity.class)));
-        Button plan = actionButton("✦ Smart plan", p.surfaceAlt, p.text); plan.setOnClickListener(v -> { int n = repo.generateSmartPlan(); Toast.makeText(this, n == 0 ? "Add syllabus topics first" : "Built " + n + " revision missions", Toast.LENGTH_SHORT).show(); currentTab = 1; renderShell(); });
-        actions.addView(add, weightMargin(1f, 11, 5)); actions.addView(plan, weightMargin(1f, 11, 0)); box.addView(actions);
-
-        sectionTitle(box, "Today's missions", "Small wins that reduce exam pressure.", p);
         List<StudyTask> today = repo.getTodayTasks();
+        LinearLayout command = card();
+        LinearLayout commandHead = new LinearLayout(this);
+        commandHead.setOrientation(LinearLayout.HORIZONTAL);
+        commandHead.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout commandText = column();
+        commandText.addView(text("TODAY'S COMMAND", 9.5f, p.primary, true));
         if (today.isEmpty()) {
-            LinearLayout empty = card(); empty.addView(text(repo.getTasks().isEmpty() ? "No revision plan yet. Add syllabus topics, then generate a smart plan." : "Today's board is clear. You can pull tomorrow's mission forward or start a focus session.", 13, p.muted, false));
-            Button go = actionButton(repo.getTasks().isEmpty() ? "Open planner" : "Start focus", p.surfaceAlt, p.text); go.setOnClickListener(v -> { currentTab = repo.getTasks().isEmpty() ? 1 : 2; renderShell(); }); empty.addView(go, topHeight(10, 46)); box.addView(empty);
+            commandText.addView(text(repo.getTasks().isEmpty() ? "Build your revision map" : "Your board is clear", 17, p.text, true), top(2));
+            commandText.addView(text(repo.getTasks().isEmpty() ? "Add topics and let Smart Plan split the workload." : "Use the free space for a focused review sprint.", 10.5f, p.muted, false), top(2));
         } else {
-            int limit = Math.min(4, today.size()); for (int i = 0; i < limit; i++) box.addView(taskCard(today.get(i), true), marginBottom(9));
+            StudyTask first = today.get(0);
+            commandText.addView(text(first.title, 17, p.text, true), top(2));
+            commandText.addView(text(today.size() + " mission" + (today.size() == 1 ? "" : "s") + " today  ·  " + first.minutes + " min first sprint", 10.5f, p.muted, false), top(2));
+        }
+        commandHead.addView(commandText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        Button commandAction = actionButton(today.isEmpty() && repo.getTasks().isEmpty() ? "PLAN" : "START", p.primary, contrastText(p.primary));
+        commandAction.setOnClickListener(v -> {
+            currentTab = (today.isEmpty() && repo.getTasks().isEmpty()) ? 1 : 2;
+            renderShell();
+        });
+        LinearLayout.LayoutParams cap = new LinearLayout.LayoutParams(dp(76), dp(44));
+        cap.leftMargin = dp(10);
+        commandHead.addView(commandAction, cap);
+        command.addView(commandHead);
+        box.addView(command, top(10));
+
+        LinearLayout quick = new LinearLayout(this);
+        quick.setOrientation(LinearLayout.HORIZONTAL);
+        Button add = actionButton("＋ Exam", p.surfaceAlt, p.text);
+        add.setOnClickListener(v -> startActivity(new Intent(this, AddExamActivity.class)));
+        Button plan = actionButton("✦ Smart plan", p.surfaceAlt, p.text);
+        plan.setOnClickListener(v -> {
+            int n = repo.generateSmartPlan();
+            Toast.makeText(this, n == 0 ? "Add syllabus topics first" : "Built " + n + " revision missions", Toast.LENGTH_SHORT).show();
+            currentTab = 1;
+            renderShell();
+        });
+        quick.addView(add, weightMargin(1f, 10, 5));
+        quick.addView(plan, weightMargin(1f, 10, 0));
+        box.addView(quick);
+
+        List<Exam> exams = repo.getUpcomingExams();
+        if (!exams.isEmpty()) {
+            sectionTitle(box, "Readiness map", "Sooner exams move left. Higher readiness moves up. Larger dots mean higher priority.", p);
+            LinearLayout graphCard = card();
+            ReadinessDotGraphView graph = new ReadinessDotGraphView(this).setExams(exams);
+            graphCard.addView(graph, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(220)));
+            box.addView(graphCard);
         }
 
-        sectionTitle(box, "Upcoming exams", "Pressure is sorted by the real deadline.", p);
-        List<Exam> exams = repo.getUpcomingExams();
-        if (exams.isEmpty()) {
-            LinearLayout empty = card(); empty.setGravity(Gravity.CENTER); empty.addView(text("Nothing is chasing you yet 😌\nCreate your first exam mission.", 13.5f, p.muted, false)); box.addView(empty);
+        sectionTitle(box, "Today's missions", "The smallest useful actions, already ordered for you.", p);
+        if (today.isEmpty()) {
+            LinearLayout empty = card();
+            empty.addView(text(repo.getTasks().isEmpty()
+                    ? "No revision plan yet. Add syllabus topics, then generate a Smart Plan."
+                    : "Today's board is clear. Start a focus sprint or pull a mission forward.",
+                    12.5f, p.muted, false));
+            box.addView(empty);
         } else {
-            for (int i = 0; i < Math.min(exams.size(), 6); i++) box.addView(examCard(exams.get(i)), marginBottom(9));
+            int limit = Math.min(5, today.size());
+            for (int i = 0; i < limit; i++) box.addView(taskCard(today.get(i), true), marginBottom(9));
+        }
+
+        sectionTitle(box, "Upcoming exams", "A clean deadline view with readiness and target score.", p);
+        if (exams.isEmpty()) {
+            LinearLayout empty = card();
+            empty.setGravity(Gravity.CENTER);
+            empty.addView(text("Nothing is chasing you yet. Add an exam when you are ready.", 13, p.muted, false));
+            box.addView(empty);
+        } else {
+            for (int i = 0; i < Math.min(exams.size(), 7); i++) box.addView(examCard(exams.get(i)), marginBottom(9));
         }
         return scroll;
     }
@@ -322,35 +480,243 @@ public class MainActivity extends Activity {
     }
 
     // ---------------- Insights ----------------
-    private View buildInsightsPage(){ThemeManager.Palette p=ThemeManager.palette(this);ScrollView scroll=new ScrollView(this);LinearLayout box=column();box.setPadding(0,dp(8),0,dp(24));scroll.addView(box);box.addView(text("Study intelligence",24,p.text,true));box.addView(text("See where your time goes and whether effort is matching exam pressure.",12.5f,p.muted,false),top(3));
-        LinearLayout rank=card();rank.setBackground(ThemeManager.gradient(p.primary,p.secondary,dp(24)));int xp=repo.getXp(),lvl=repo.getLevel();rank.addView(text("LEVEL "+lvl+" · "+ThemeManager.rankName(this,lvl),11,contrastText(p.primary),true));rank.addView(text(xp+" XP",29,contrastText(p.primary),true),top(4));TextView next=text((500-repo.getXpIntoLevel())+" XP to next level",11,contrastText(p.primary),false);next.setAlpha(.8f);rank.addView(next);ProgressBar xpbar=progress(Math.round(repo.getXpIntoLevel()*100f/500f),Color.WHITE);rank.addView(xpbar,topHeight(8,8));box.addView(rank,top(12));
-        LinearLayout stats=new LinearLayout(this);stats.setOrientation(LinearLayout.HORIZONTAL);stats.addView(statTile("TOTAL",repo.getFocusMinutes()+"m","focused",p),weightMargin(1f,10,4));stats.addView(statTile("SESSIONS",String.valueOf(repo.getSessions().size()),"completed",p),weightMargin(1f,10,4));stats.addView(statTile("STREAK",repo.getStreak()+"d","current",p),weightMargin(1f,10,0));box.addView(stats);
-        sectionTitle(box,"Last 7 days","Focused minutes per day.",p);LinearLayout chart=card();int[] values=repo.last7DaysMinutes();int max=1;for(int v:values)max=Math.max(max,v);LinearLayout bars=new LinearLayout(this);bars.setOrientation(LinearLayout.HORIZONTAL);bars.setGravity(Gravity.BOTTOM);Calendar cal=Calendar.getInstance();cal.add(Calendar.DAY_OF_MONTH,-6);
-        for(int i=0;i<7;i++){LinearLayout c=column();c.setGravity(Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);TextView val=text(String.valueOf(values[i]),9,p.muted,true);val.setGravity(Gravity.CENTER);c.addView(val);View bar=new View(this);bar.setBackground(ThemeManager.rounded(values[i]>0?p.primary:p.surfaceAlt,dp(8)));int h=Math.max(dp(6),Math.round(dp(110)*(values[i]/(float)max)));LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(dp(20),h);bp.topMargin=dp(5);c.addView(bar,bp);TextView day=text(new SimpleDateFormat("EEE",Locale.getDefault()).format(cal.getTime()),9,p.muted,false);day.setGravity(Gravity.CENTER);c.addView(day,top(5));bars.addView(c,new LinearLayout.LayoutParams(0,dp(158),1f));cal.add(Calendar.DAY_OF_MONTH,1);}chart.addView(bars);box.addView(chart);
-        sectionTitle(box,"Exam readiness","Completion + confidence + practice time.",p);List<Exam> exams=repo.getUpcomingExams();if(exams.isEmpty())box.addView(emptyMessage("Add exams and topics to unlock readiness insights.",p));for(Exam e:exams){int ready=repo.readinessForExam(e.id);LinearLayout c=card();LinearLayout r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);r.addView(text(e.subject,14,p.text,true),new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));r.addView(text(ready+"%",16,ready>=70?p.success:p.primary,true));c.addView(r);c.addView(progress(ready,ready>=70?p.success:p.primary),topHeight(7,8));c.addView(text(e.title+" · "+formatRemaining(e.timeMillis,false)+" left",10.5f,p.muted,false),top(6));box.addView(c,marginBottom(8));}
-        Map<String,Integer> bySubject=repo.focusMinutesBySubject();if(!bySubject.isEmpty()){sectionTitle(box,"Time by subject","Where your study time has actually gone.",p);for(Map.Entry<String,Integer> entry:bySubject.entrySet()){LinearLayout r=card();LinearLayout rr=new LinearLayout(this);rr.setOrientation(LinearLayout.HORIZONTAL);rr.addView(text(entry.getKey(),13,p.text,true),new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));rr.addView(text(entry.getValue()+"m",14,p.primary,true));r.addView(rr);box.addView(r,marginBottom(7));}}
-        return scroll;}
+    private View buildInsightsPage() {
+        ThemeManager.Palette p = ThemeManager.palette(this);
+        ScrollView scroll = new ScrollView(this);
+        scroll.setClipToPadding(false);
+        LinearLayout box = column();
+        box.setPadding(0, dp(7), 0, dp(26));
+        scroll.addView(box);
+
+        TextView kicker = text("STUDY INTELLIGENCE", 10, p.primary, true);
+        kicker.setLetterSpacing(.14f);
+        box.addView(kicker);
+        box.addView(text("See what your effort is actually doing.", 24, p.text, true), top(2));
+        box.addView(text("Trends, consistency, readiness and pressure — without spreadsheet energy.", 11.7f, p.muted, false), top(3));
+
+        int xp = repo.getXp();
+        int lvl = repo.getLevel();
+        LinearLayout rank = card();
+        rank.setPadding(dp(18), dp(17), dp(18), dp(17));
+        rank.setBackground(ThemeManager.hero(this, dp(26)));
+        rank.addView(text("LEVEL " + lvl + "  ·  " + ThemeManager.rankName(this, lvl), 10.5f, Color.WHITE, true));
+        rank.addView(text(xp + " XP", 29, Color.WHITE, true), top(4));
+        TextView next = text((500 - repo.getXpIntoLevel()) + " XP to next level  ·  " + repo.activeDaysLast28() + "/28 active days", 10.5f, Color.WHITE, false);
+        next.setAlpha(.82f);
+        rank.addView(next, top(2));
+        ProgressBar xpbar = progress(Math.round(repo.getXpIntoLevel() * 100f / 500f), Color.WHITE);
+        rank.addView(xpbar, topHeight(9, 7));
+        box.addView(rank, top(12));
+
+        LinearLayout stats = new LinearLayout(this);
+        stats.setOrientation(LinearLayout.HORIZONTAL);
+        stats.addView(statTile("TOTAL", repo.getFocusMinutes() + "m", repo.getSessions().size() + " sessions", p), weightMargin(1f, 10, 5));
+        stats.addView(statTile("7D AVG", repo.averageFocusLast7Days() + "m", "per day", p), weightMargin(1f, 10, 5));
+        stats.addView(statTile("ATTENTION", String.valueOf(repo.examsNeedingAttention()), "exam risk", p), weightMargin(1f, 10, 0));
+        box.addView(stats);
+
+        sectionTitle(box, "Focus trend", "Seven days of real focused minutes with your average line.", p);
+        LinearLayout trendCard = card();
+        FocusTrendView trend = new FocusTrendView(this).setData(repo.last7DaysMinutes());
+        trendCard.addView(trend, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(195)));
+        box.addView(trendCard);
+
+        sectionTitle(box, "Consistency dots", "Twenty-eight days at a glance. Bigger dots mean more focused minutes.", p);
+        LinearLayout dotsCard = card();
+        StudyDotHeatmapView dots = new StudyDotHeatmapView(this).setData(repo.last28DaysMinutes());
+        dotsCard.addView(dots, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(165)));
+        box.addView(dotsCard);
+
+        List<Exam> exams = repo.getUpcomingExams();
+        sectionTitle(box, "Pressure vs readiness", "This is the dot graph: deadline on X, readiness on Y, priority in dot size.", p);
+        LinearLayout readyMap = card();
+        ReadinessDotGraphView graph = new ReadinessDotGraphView(this).setExams(exams);
+        readyMap.addView(graph, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(230)));
+        box.addView(readyMap);
+
+        sectionTitle(box, "Exam readiness", "Completion + confidence + practice time for every active exam.", p);
+        if (exams.isEmpty()) {
+            box.addView(emptyMessage("Add exams and syllabus topics to unlock readiness intelligence.", p));
+        } else {
+            for (Exam e : exams) {
+                int ready = repo.readinessForExam(e.id);
+                LinearLayout card = card();
+
+                LinearLayout head = new LinearLayout(this);
+                head.setOrientation(LinearLayout.HORIZONTAL);
+                head.setGravity(Gravity.CENTER_VERTICAL);
+                LinearLayout names = column();
+                names.addView(text(e.subject, 14.5f, p.text, true));
+                names.addView(text(e.title + "  ·  " + formatRemaining(e.timeMillis, false) + " left", 10.3f, p.muted, false), top(2));
+                head.addView(names, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+                int rc = ready >= 70 ? p.success : (ready >= 40 ? p.warning : p.danger);
+                TextView badge = text(ready + "%", 14.5f, rc, true);
+                badge.setPadding(dp(9), dp(5), dp(9), dp(5));
+                badge.setBackground(ThemeManager.outlined(alpha(rc, 22), alpha(rc, 80), dp(14), dp(1)));
+                head.addView(badge);
+                card.addView(head);
+                card.addView(progress(ready, rc), topHeight(9, 8));
+                box.addView(card, marginBottom(8));
+            }
+        }
+
+        Map<String,Integer> bySubject = repo.focusMinutesBySubject();
+        if (!bySubject.isEmpty()) {
+            sectionTitle(box, "Study balance", "Your focus-time distribution by subject.", p);
+            int maxMinutes = 1;
+            for (int v : bySubject.values()) maxMinutes = Math.max(maxMinutes, v);
+
+            for (Map.Entry<String,Integer> entry : bySubject.entrySet()) {
+                LinearLayout row = card();
+                LinearLayout rr = new LinearLayout(this);
+                rr.setOrientation(LinearLayout.HORIZONTAL);
+                rr.addView(text(entry.getKey(), 13, p.text, true), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                rr.addView(text(entry.getValue() + "m", 13, p.primary, true));
+                row.addView(rr);
+                row.addView(progress(Math.round(entry.getValue() * 100f / maxMinutes), p.primary), topHeight(7, 6));
+                box.addView(row, marginBottom(7));
+            }
+        }
+
+        return scroll;
+    }
 
     // ---------------- Themes + settings ----------------
-    private View buildMorePage(){ThemeManager.Palette p=ThemeManager.palette(this);ScrollView scroll=new ScrollView(this);LinearLayout box=column();box.setPadding(0,dp(8),0,dp(24));scroll.addView(box);box.addView(text("Control center",24,p.text,true));box.addView(text("Alarms, widgets, themes and privacy controls live here.",12.5f,p.muted,false),top(3));
-        sectionTitle(box,"Alarm studio","Wake-up, study-start and revision alarms with snooze + custom sound.",p);LinearLayout alarm=card();List<CustomAlarm> alarms=new CustomAlarmRepository(this).getAll();alarm.addView(text(alarms.isEmpty()?"No custom alarms yet":alarms.size()+" custom alarm"+(alarms.size()==1?"":"s")+" configured",14,p.text,true));alarm.addView(text("Exact timing uses Android's Alarms & reminders access. Repeat rules: once, daily or weekdays.",11,p.muted,false),top(4));Button alarmsBtn=actionButton("Open Alarm Studio",p.primary,contrastText(p.primary));alarmsBtn.setOnClickListener(v->startActivity(new Intent(this,AlarmHubActivity.class)));alarm.addView(alarmsBtn,topHeight(11,48));box.addView(alarm);
-        sectionTitle(box,"Widget studio","Every widget has its own glass theme, opacity, density and exam selection.",p);LinearLayout widgets=card();widgets.addView(text("Frosted glass widgets · per-widget styles · compact/detailed layouts",13,p.text,true));Button widgetBtn=actionButton("Customize installed widgets",p.surfaceAlt,p.text);widgetBtn.setOnClickListener(v->startActivity(new Intent(this,WidgetStudioActivity.class)));widgets.addView(widgetBtn,topHeight(10,48));box.addView(widgets);
-        sectionTitle(box,"Anime battle modes","Change the app's visual identity, ranks and default widget accent.",p);
-        box.addView(themeCard("naruto","Shinobi Mode","Naruto-inspired · chakra orange · ink + paper","Genin → Chunin → Jonin → Hokage",Color.rgb(249,115,22),Color.rgb(17,24,39)),top(12));
-        box.addView(themeCard("dragonball","Saiyan Mode","Dragon Ball-inspired · gold energy · cobalt training","Training → Elite → Super Saiyan → Ultra Instinct",Color.rgb(245,158,11),Color.rgb(37,99,235)),top(10));
-        box.addView(themeCard("bleach","Soul Reaper Mode","Bleach-inspired · monochrome · crimson blade","Soul Reaper → Shikai → Bankai → Captain",Color.rgb(20,20,22),Color.rgb(220,38,38)),top(10));
-        sectionTitle(box,"Daily training goal","Used by Mission Control and Focus mode.",p);LinearLayout goal=card();LinearLayout gr=new LinearLayout(this);gr.setOrientation(LinearLayout.HORIZONTAL);gr.setGravity(Gravity.CENTER_VERTICAL);Button minus=actionButton("−",p.surfaceAlt,p.text);TextView g=text(repo.getDailyGoal()+" min / day",20,p.text,true);g.setGravity(Gravity.CENTER);Button plus=actionButton("＋",p.surfaceAlt,p.text);minus.setOnClickListener(v->{repo.setDailyGoal(repo.getDailyGoal()-15);renderCurrentPage();});plus.setOnClickListener(v->{repo.setDailyGoal(repo.getDailyGoal()+15);renderCurrentPage();});gr.addView(minus,new LinearLayout.LayoutParams(dp(48),dp(44)));gr.addView(g,new LinearLayout.LayoutParams(0,dp(44),1f));gr.addView(plus,new LinearLayout.LayoutParams(dp(48),dp(44)));goal.addView(gr);box.addView(goal);
-        sectionTitle(box,"Offline by design","Your exams, topics, plans and sessions stay on-device in this build.",p);LinearLayout privacy=card();privacy.addView(text("✓ No account required\n✓ No ads\n✓ No analytics SDK\n✓ Works without internet\n✓ Health and usage access are opt-in\n✓ Home-screen widgets can be customized independently",12.5f,p.text,false));box.addView(privacy);
-        TextView note=text("Fan-style theme names are included for a private build. The app ships no copied anime screenshots, logos or character art. Use licensed branding or rename themes before public store distribution.",10.5f,p.muted,false);box.addView(note,top(14));return scroll;}
 
-    private View themeCard(String key,String name,String subtitle,String ranks,int c1,int c2){ThemeManager.Palette p=ThemeManager.palette(this);boolean selected=repo.getTheme().equals(key);LinearLayout card=column();card.setPadding(dp(18),dp(16),dp(18),dp(16));card.setBackground(ThemeManager.gradient(c1,c2,dp(24)));TextView title=text(name+(selected?"  ✓":""),21,Color.WHITE,true);card.addView(title);TextView sub=text(subtitle,11.5f,Color.WHITE,false);sub.setAlpha(.86f);card.addView(sub,top(3));TextView r=text(ranks,10,Color.WHITE,true);r.setAlpha(.78f);card.addView(r,top(8));card.setOnClickListener(v->{repo.setTheme(key);WidgetUpdater.updateAll(this);renderShell();});return card;}
+    // ---------------- Themes + settings ----------------
+    private View buildMorePage() {
+        ThemeManager.Palette p = ThemeManager.palette(this);
+        ScrollView scroll = new ScrollView(this);
+        scroll.setClipToPadding(false);
+        LinearLayout box = column();
+        box.setPadding(0, dp(7), 0, dp(28));
+        scroll.addView(box);
+
+        TextView kicker = text("STUDIO", 10, p.primary, true);
+        kicker.setLetterSpacing(.15f);
+        box.addView(kicker);
+        box.addView(text("Make ExamVerse feel like yours.", 24, p.text, true), top(2));
+        box.addView(text("Themes, alarms, widgets and training preferences — all in one place.", 11.7f, p.muted, false), top(3));
+
+        sectionTitle(box, "Quick tools", "The stuff you actually need, without hunting through settings.", p);
+        LinearLayout tools = new LinearLayout(this);
+        tools.setOrientation(LinearLayout.HORIZONTAL);
+
+        Button alarmsBtn = actionButton("⏰  Alarms", p.surfaceAlt, p.text);
+        alarmsBtn.setOnClickListener(v -> startActivity(new Intent(this, AlarmHubActivity.class)));
+        Button widgetBtn = actionButton("▦  Widgets", p.surfaceAlt, p.text);
+        widgetBtn.setOnClickListener(v -> startActivity(new Intent(this, WidgetStudioActivity.class)));
+        tools.addView(alarmsBtn, weightMargin(1f, 0, 5));
+        tools.addView(widgetBtn, weightMargin(1f, 0, 0));
+        box.addView(tools);
+
+        LinearLayout tools2 = new LinearLayout(this);
+        tools2.setOrientation(LinearLayout.HORIZONTAL);
+        Button lifeBtn = actionButton("◉  Wellness", p.surfaceAlt, p.text);
+        lifeBtn.setOnClickListener(v -> { currentTab = 3; renderShell(); });
+        Button focusBtn = actionButton("⚡  Focus now", p.primary, contrastText(p.primary));
+        focusBtn.setOnClickListener(v -> { currentTab = 2; renderShell(); });
+        tools2.addView(lifeBtn, weightMargin(1f, 8, 5));
+        tools2.addView(focusBtn, weightMargin(1f, 8, 0));
+        box.addView(tools2);
+
+        sectionTitle(box, "Anime battle modes", "Each mode now changes the full atmosphere: color system, glass, motion, rank language and widgets.", p);
+        box.addView(themeCard("naruto", "Shinobi Ember", "Warm parchment, ember chakra and ink-seal motion", "Academy → Genin → Chunin → Jonin → Hokage",
+                Color.rgb(249,115,22), Color.rgb(127,29,29)), top(12));
+        box.addView(themeCard("dragonball", "Saiyan Energy", "Deep cosmic blue, gold energy and training-beam motion", "Trainee → Saiyan → Elite → Super Saiyan → Ultra Instinct",
+                Color.rgb(255,184,28), Color.rgb(37,99,235)), top(10));
+        box.addView(themeCard("bleach", "Soul Reaper Noir", "Ink black, crimson slash geometry and blade-light accents", "Soul Reaper → Seated Officer → Shikai → Bankai → Captain",
+                Color.rgb(244,63,94), Color.rgb(24,24,27)), top(10));
+
+        sectionTitle(box, "Daily training goal", "Mission Control and Focus use this to pace the day.", p);
+        LinearLayout goal = card();
+        LinearLayout gr = new LinearLayout(this);
+        gr.setOrientation(LinearLayout.HORIZONTAL);
+        gr.setGravity(Gravity.CENTER_VERTICAL);
+        Button minus = actionButton("−", p.surfaceAlt, p.text);
+        TextView g = text(repo.getDailyGoal() + " min / day", 20, p.text, true);
+        g.setGravity(Gravity.CENTER);
+        Button plus = actionButton("＋", p.surfaceAlt, p.text);
+        minus.setOnClickListener(v -> { repo.setDailyGoal(repo.getDailyGoal() - 15); renderCurrentPage(); });
+        plus.setOnClickListener(v -> { repo.setDailyGoal(repo.getDailyGoal() + 15); renderCurrentPage(); });
+        gr.addView(minus, new LinearLayout.LayoutParams(dp(48), dp(44)));
+        gr.addView(g, new LinearLayout.LayoutParams(0, dp(44), 1f));
+        gr.addView(plus, new LinearLayout.LayoutParams(dp(48), dp(44)));
+        goal.addView(gr);
+        box.addView(goal);
+
+        sectionTitle(box, "Privacy & performance", "Useful permissions stay optional and the core planner remains offline-first.", p);
+        LinearLayout privacy = card();
+        privacy.addView(text("✓ Offline exams, plans, topics and sessions\n✓ No account required\n✓ No ads or analytics SDK\n✓ Health access is opt-in\n✓ Usage access is opt-in\n✓ Lightweight custom charts — no heavy chart library\n✓ Widgets can use independent glass styles",
+                12.2f, p.text, false));
+        box.addView(privacy);
+
+        TextView note = text("Fan-style theme names are for this private build. No copied character art, franchise screenshots or logos are bundled.", 10.3f, p.muted, false);
+        box.addView(note, top(14));
+        return scroll;
+    }
+
+    private View themeCard(String key, String name, String subtitle, String ranks, int c1, int c2) {
+        ThemeManager.Palette p = ThemeManager.palette(this);
+        boolean selected = repo.getTheme().equals(key);
+
+        LinearLayout card = column();
+        card.setPadding(dp(18), dp(16), dp(18), dp(16));
+        card.setBackground(ThemeManager.gradient(c1, c2, dp(25)));
+        card.setElevation(selected ? dp(7) : dp(3));
+
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout names = column();
+        names.addView(text(name, 20.5f, Color.WHITE, true));
+        TextView sub = text(subtitle, 10.8f, Color.WHITE, false);
+        sub.setAlpha(.86f);
+        names.addView(sub, top(3));
+        top.addView(names, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView status = text(selected ? "ACTIVE" : "APPLY", 9.2f, Color.WHITE, true);
+        status.setLetterSpacing(.08f);
+        status.setPadding(dp(10), dp(6), dp(10), dp(6));
+        status.setBackground(ThemeManager.outlined(alpha(Color.BLACK, 28), alpha(Color.WHITE, 76), dp(14), dp(1)));
+        top.addView(status);
+        card.addView(top);
+
+        LinearLayout swatches = new LinearLayout(this);
+        swatches.setOrientation(LinearLayout.HORIZONTAL);
+        swatches.setGravity(Gravity.CENTER_VERTICAL);
+        int[] colors = {c1, c2, Color.WHITE, alpha(Color.WHITE, 120)};
+        for (int color : colors) {
+            View dot = new View(this);
+            dot.setBackground(ThemeManager.rounded(color, dp(7)));
+            LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(dp(14), dp(14));
+            dlp.rightMargin = dp(6);
+            swatches.addView(dot, dlp);
+        }
+        TextView r = text(ranks, 9.6f, Color.WHITE, true);
+        r.setAlpha(.78f);
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        rp.leftMargin = dp(4);
+        swatches.addView(r, rp);
+        card.addView(swatches, top(11));
+
+        card.setOnClickListener(v -> {
+            repo.setTheme(key);
+            WidgetUpdater.updateAll(this);
+            renderShell();
+        });
+        return card;
+    }
+
+    // ---------------- UI helpers ----------------
 
     // ---------------- UI helpers ----------------
     private void sectionTitle(LinearLayout box,String title,String subtitle,ThemeManager.Palette p){TextView h=text(title,17.5f,p.text,true);LinearLayout.LayoutParams hp=top(20);box.addView(h,hp);box.addView(text(subtitle,10.8f,p.muted,false),top(2));}
     private LinearLayout emptyMessage(String msg,ThemeManager.Palette p){LinearLayout l=card();l.addView(text(msg,12.5f,p.muted,false));return l;}
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
-    private LinearLayout card(){ThemeManager.Palette p=ThemeManager.palette(this);LinearLayout l=column();l.setPadding(dp(16),dp(15),dp(16),dp(15));l.setBackground(ThemeManager.outlined(alpha(p.surface,p.dark?220:232),alpha(p.primary,45),dp(22),dp(1)));l.setElevation(dp(2));return l;}
-    private Button actionButton(String label,int bg,int fg){Button b=new Button(this);b.setText(label);b.setTextSize(12.5f);b.setTextColor(fg);b.setAllCaps(false);b.setTypeface(null,Typeface.BOLD);b.setBackground(ThemeManager.outlined(bg,alpha(Color.WHITE,45),dp(17),dp(1)));b.setPadding(dp(8),0,dp(8),0);b.setElevation(dp(1));return b;}
+    private LinearLayout card(){ThemeManager.Palette p=ThemeManager.palette(this);LinearLayout l=column();l.setPadding(dp(16),dp(15),dp(16),dp(15));l.setBackground(ThemeManager.glass(this,dp(22),false));l.setElevation(dp(3));return l;}
+    private Button actionButton(String label,int bg,int fg){Button b=new Button(this);b.setText(label);b.setTextSize(12.2f);b.setTextColor(fg);b.setAllCaps(false);b.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));b.setBackground(ThemeManager.outlined(bg,alpha(Color.WHITE,38),dp(17),dp(1)));b.setPadding(dp(9),0,dp(9),0);b.setElevation(dp(1));b.setStateListAnimator(null);return b;}
     private TextView text(String value,float sp,int color,boolean bold){TextView t=new TextView(this);t.setText(value);t.setTextSize(sp);t.setTextColor(color);t.setTypeface(null,bold?Typeface.BOLD:Typeface.NORMAL);t.setLineSpacing(0,1.08f);return t;}
     private EditText field(String hint,ThemeManager.Palette p){EditText e=new EditText(this);e.setHint(hint);e.setTextColor(p.text);e.setHintTextColor(p.muted);e.setTextSize(14);e.setPadding(dp(12),dp(10),dp(12),dp(10));e.setBackground(ThemeManager.outlined(p.surfaceAlt,alpha(p.muted,45),dp(14),dp(1)));return e;}
     private Spinner spinner(String[] labels){
