@@ -435,18 +435,152 @@ public class MainActivity extends Activity {
 
     // ---------------- Focus ----------------
     private View buildFocusPage() {
-        ThemeManager.Palette p=ThemeManager.palette(this); ScrollView scroll=new ScrollView(this); LinearLayout box=column();box.setPadding(0,dp(8),0,dp(22));scroll.addView(box);
-        box.addView(text("Focus dojo",24,p.text,true));box.addView(text("Choose what you are training, then disappear for one clean block.",12.5f,p.muted,false),top(3));
-        LinearLayout timer=card();timer.setGravity(Gravity.CENTER_HORIZONTAL);timer.setPadding(dp(18),dp(20),dp(18),dp(20)); TextView mode=text(focusMode.toUpperCase(Locale.getDefault()),10.5f,p.primary,true);timer.addView(mode);
-        focusTimeText=text(formatFocus(focusRemainingMs),48,p.text,true);focusTimeText.setGravity(Gravity.CENTER);timer.addView(focusTimeText,top(6));
-        int today=repo.focusMinutesToday(),goal=repo.getDailyGoal();timer.addView(text("Today " + today + " / " + goal + " minutes",11.5f,p.muted,false),top(2)); ProgressBar goalBar=progress(Math.min(100,Math.round(today*100f/Math.max(1,goal))),p.primary);timer.addView(goalBar,topHeight(8,8));
-        List<Exam> exams=repo.getUpcomingExams(); List<String> examLabels=new ArrayList<>();examLabels.add("General study");for(Exam e:exams)examLabels.add(e.subject+" · "+e.title);Spinner examSpinner=spinner(examLabels.toArray(new String[0]));
-        int examIndex=0;for(int i=0;i<exams.size();i++)if(exams.get(i).id==focusExamId)examIndex=i+1;examSpinner.setSelection(examIndex);examSpinner.setOnItemSelectedListener(new SimpleItemSelected(pos->{long nextId=pos==0?-1:exams.get(pos-1).id;if(nextId!=focusExamId){focusExamId=nextId;focusTopicId=-1;handler.post(this::renderCurrentPage);}}));timer.addView(examSpinner,topHeight(12,50));
-        List<Topic> focusTopics=focusExamId>0?repo.getTopicsForExam(focusExamId):new ArrayList<>(); List<String> topicLabels=new ArrayList<>();topicLabels.add("No specific topic");for(Topic t:focusTopics)topicLabels.add(t.name); Spinner topicSpinner=spinner(topicLabels.toArray(new String[0]));int topicIndex=0;for(int i=0;i<focusTopics.size();i++)if(focusTopics.get(i).id==focusTopicId)topicIndex=i+1;topicSpinner.setSelection(topicIndex);topicSpinner.setOnItemSelectedListener(new SimpleItemSelected(pos->{focusTopicId=pos==0?-1:focusTopics.get(pos-1).id;}));timer.addView(topicSpinner,topHeight(6,50));
-        LinearLayout controls=new LinearLayout(this);controls.setOrientation(LinearLayout.HORIZONTAL); Button start=actionButton(focusRunning?"Pause":"Start",p.primary,contrastText(p.primary));start.setOnClickListener(v->{if(focusRunning)pauseFocus();else startFocus();renderCurrentPage();});Button finish=actionButton("Finish + log",p.surfaceAlt,p.text);finish.setOnClickListener(v->finishFocusEarly());controls.addView(start,weightHeight(1f,50));controls.addView(finish,weightLeftHeight(1f,8,50));timer.addView(controls,top(12));box.addView(timer,top(12));
-        sectionTitle(box,"Training presets","Use short sprints or deep-work blocks.",p); LinearLayout presets=new LinearLayout(this);presets.setOrientation(LinearLayout.HORIZONTAL);int[] mins={25,50,90};String[] names={"25/5","50/10","90/20"};String[] modes={"Pomodoro","Long Focus","Deep Work"};
-        for(int i=0;i<mins.length;i++){final int m=mins[i];final String mo=modes[i];Button b=actionButton(names[i],focusPresetMs==m*60_000L?p.primary:p.surface,focusPresetMs==m*60_000L?contrastText(p.primary):p.text);b.setOnClickListener(v->{if(!focusRunning){focusPresetMs=m*60_000L;focusRemainingMs=focusPresetMs;focusMode=mo;renderCurrentPage();}});LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(48),1f);if(i>0)lp.leftMargin=dp(7);presets.addView(b,lp);}box.addView(presets);
-        sectionTitle(box,"Recent sessions","Your work, not just your intentions.",p);List<StudySession> sessions=repo.getSessions();if(sessions.isEmpty())box.addView(emptyMessage("Complete your first focus block and it will appear here.",p));else for(int i=0;i<Math.min(6,sessions.size());i++)box.addView(sessionCard(sessions.get(i)),marginBottom(7));return scroll;
+        ThemeManager.Palette p = ThemeManager.palette(this);
+        ScrollView scroll = new ScrollView(this);
+        scroll.setClipToPadding(false);
+        LinearLayout box = column();
+        box.setPadding(0, dp(7), 0, dp(26));
+        scroll.addView(box);
+
+        TextView kicker = text("FOCUS ENGINE", 10, p.primary, true);
+        kicker.setLetterSpacing(.14f);
+        box.addView(kicker);
+        box.addView(text("One block. One target. No chaos.", 24, p.text, true), top(2));
+        box.addView(text("Attach the session to an exam or topic so every minute improves your readiness map.", 11.7f, p.muted, false), top(3));
+
+        LinearLayout timer = column();
+        timer.setGravity(Gravity.CENTER_HORIZONTAL);
+        timer.setPadding(dp(18), dp(18), dp(18), dp(18));
+        timer.setBackground(ThemeManager.hero(this, dp(30)));
+        timer.setElevation(dp(5));
+
+        LinearLayout timerHead = new LinearLayout(this);
+        timerHead.setOrientation(LinearLayout.HORIZONTAL);
+        timerHead.setGravity(Gravity.CENTER_VERTICAL);
+        TextView mode = text(focusMode.toUpperCase(Locale.getDefault()), 10.3f, Color.WHITE, true);
+        mode.setLetterSpacing(.12f);
+        timerHead.addView(mode, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView status = text(focusRunning ? "IN SESSION" : "READY", 9.2f, Color.WHITE, true);
+        status.setPadding(dp(9), dp(5), dp(9), dp(5));
+        status.setBackground(ThemeManager.outlined(alpha(Color.BLACK, 28), alpha(Color.WHITE, 65), dp(13), dp(1)));
+        timerHead.addView(status);
+        timer.addView(timerHead);
+
+        focusTimeText = text(formatFocus(focusRemainingMs), 50, Color.WHITE, true);
+        focusTimeText.setGravity(Gravity.CENTER);
+        timer.addView(focusTimeText, top(8));
+
+        int today = repo.focusMinutesToday(), goal = repo.getDailyGoal();
+        LinearLayout todayRow = new LinearLayout(this);
+        todayRow.setOrientation(LinearLayout.HORIZONTAL);
+        todayRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView todayText = text("TODAY  " + today + " / " + goal + " min", 10.2f, Color.WHITE, true);
+        todayText.setAlpha(.88f);
+        todayRow.addView(todayText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView streak = text(repo.getStreak() + "d streak", 10.2f, Color.WHITE, true);
+        streak.setAlpha(.88f);
+        todayRow.addView(streak);
+        timer.addView(todayRow, top(9));
+
+        ProgressBar goalBar = progress(Math.min(100, Math.round(today * 100f / Math.max(1, goal))), Color.WHITE);
+        timer.addView(goalBar, topHeight(6, 7));
+        box.addView(timer, top(12));
+
+        LinearLayout target = card();
+        TextView targetLabel = text("SESSION TARGET", 9.5f, p.primary, true);
+        targetLabel.setLetterSpacing(.10f);
+        target.addView(targetLabel);
+
+        List<Exam> exams = repo.getUpcomingExams();
+        List<String> examLabels = new ArrayList<>();
+        examLabels.add("General study");
+        for (Exam e : exams) examLabels.add(e.subject + " · " + e.title);
+        Spinner examSpinner = spinner(examLabels.toArray(new String[0]));
+
+        int examIndex = 0;
+        for (int i = 0; i < exams.size(); i++) if (exams.get(i).id == focusExamId) examIndex = i + 1;
+        examSpinner.setSelection(examIndex);
+        examSpinner.setOnItemSelectedListener(new SimpleItemSelected(pos -> {
+            long nextId = pos == 0 ? -1 : exams.get(pos - 1).id;
+            if (nextId != focusExamId) {
+                focusExamId = nextId;
+                focusTopicId = -1;
+                handler.post(this::renderCurrentPage);
+            }
+        }));
+        target.addView(examSpinner, topHeight(9, 50));
+
+        List<Topic> focusTopics = focusExamId > 0 ? repo.getTopicsForExam(focusExamId) : new ArrayList<>();
+        List<String> topicLabels = new ArrayList<>();
+        topicLabels.add("No specific topic");
+        for (Topic t : focusTopics) topicLabels.add(t.name);
+        Spinner topicSpinner = spinner(topicLabels.toArray(new String[0]));
+
+        int topicIndex = 0;
+        for (int i = 0; i < focusTopics.size(); i++) if (focusTopics.get(i).id == focusTopicId) topicIndex = i + 1;
+        topicSpinner.setSelection(topicIndex);
+        topicSpinner.setOnItemSelectedListener(new SimpleItemSelected(pos -> {
+            focusTopicId = pos == 0 ? -1 : focusTopics.get(pos - 1).id;
+        }));
+        target.addView(topicSpinner, topHeight(7, 50));
+
+        LinearLayout controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        Button start = actionButton(focusRunning ? "Pause session" : "Start focus", p.primary, contrastText(p.primary));
+        start.setOnClickListener(v -> {
+            if (focusRunning) pauseFocus(); else startFocus();
+            renderCurrentPage();
+        });
+        Button finish = actionButton("Finish + log", p.surfaceAlt, p.text);
+        finish.setOnClickListener(v -> finishFocusEarly());
+        controls.addView(start, weightHeight(1f, 50));
+        controls.addView(finish, weightLeftHeight(1f, 8, 50));
+        target.addView(controls, top(11));
+
+        if (!focusRunning && focusRemainingMs != focusPresetMs) {
+            Button reset = actionButton("Reset timer", p.surfaceAlt, p.muted);
+            reset.setOnClickListener(v -> {
+                focusRemainingMs = focusPresetMs;
+                renderCurrentPage();
+            });
+            target.addView(reset, topHeight(7, 44));
+        }
+        box.addView(target, top(10));
+
+        sectionTitle(box, "Training presets", "Pick the amount of attention you can realistically protect.", p);
+        LinearLayout presets = new LinearLayout(this);
+        presets.setOrientation(LinearLayout.HORIZONTAL);
+        int[] mins = {25, 50, 90};
+        String[] names = {"25 / 5", "50 / 10", "90 / 20"};
+        String[] modes = {"Pomodoro", "Long Focus", "Deep Work"};
+
+        for (int i = 0; i < mins.length; i++) {
+            final int m = mins[i];
+            final String mo = modes[i];
+            boolean selected = focusPresetMs == m * 60_000L;
+            Button b = actionButton(names[i], selected ? p.primary : p.surfaceAlt, selected ? contrastText(p.primary) : p.text);
+            b.setOnClickListener(v -> {
+                if (!focusRunning) {
+                    focusPresetMs = m * 60_000L;
+                    focusRemainingMs = focusPresetMs;
+                    focusMode = mo;
+                    renderCurrentPage();
+                }
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(48), 1f);
+            if (i > 0) lp.leftMargin = dp(7);
+            presets.addView(b, lp);
+        }
+        box.addView(presets);
+
+        sectionTitle(box, "Recent sessions", "Proof of work, not just plans.", p);
+        List<StudySession> sessions = repo.getSessions();
+        if (sessions.isEmpty()) {
+            box.addView(emptyMessage("Complete your first focus block and it will appear here.", p));
+        } else {
+            for (int i = 0; i < Math.min(7, sessions.size()); i++) box.addView(sessionCard(sessions.get(i)), marginBottom(7));
+        }
+        return scroll;
     }
 
     private View sessionCard(StudySession s){ThemeManager.Palette p=ThemeManager.palette(this);LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(13),dp(10),dp(13),dp(10));row.setBackground(ThemeManager.rounded(p.surface,dp(17)));Exam e=repo.getExam(s.examId);Topic t=repo.getTopic(s.topicId);LinearLayout info=column();info.addView(text((e==null?"General":e.subject)+(t==null?"":" · "+t.name),13,p.text,true));info.addView(text(s.mode+" · "+new SimpleDateFormat("d MMM, h:mm a",Locale.getDefault()).format(new Date(s.startedAt)),10.5f,p.muted,false));row.addView(info,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));row.addView(text(s.minutes+"m",18,p.primary,true));return row;}
