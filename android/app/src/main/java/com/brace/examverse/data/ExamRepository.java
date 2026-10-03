@@ -224,16 +224,58 @@ public class ExamRepository {
     }
 
     public int[] last7DaysMinutes() {
-        int[] out = new int[7];
+        return focusMinutesForRecentDays(7);
+    }
+
+    public int[] last28DaysMinutes() {
+        return focusMinutesForRecentDays(28);
+    }
+
+    private int[] focusMinutesForRecentDays(int days) {
+        int[] out = new int[Math.max(1, days)];
         Calendar c = Calendar.getInstance();
-        c.set(Calendar.HOUR_OF_DAY, 12); c.set(Calendar.MINUTE, 0); c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
-        for (int i = 6; i >= 0; i--) {
+        c.set(Calendar.HOUR_OF_DAY, 12);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        c.add(Calendar.DAY_OF_MONTH, -(out.length - 1));
+        for (int i = 0; i < out.length; i++) {
             out[i] = focusMinutesForDay(c.getTimeInMillis());
-            c.add(Calendar.DAY_OF_MONTH, -1);
+            c.add(Calendar.DAY_OF_MONTH, 1);
         }
-        int[] ordered = new int[7];
-        for (int i = 0; i < 7; i++) ordered[i] = out[6 - i];
-        return ordered;
+        return out;
+    }
+
+    public int averageFocusLast7Days() {
+        int[] values = last7DaysMinutes();
+        int total = 0;
+        for (int value : values) total += value;
+        return Math.round(total / 7f);
+    }
+
+    public int activeDaysLast28() {
+        int active = 0;
+        for (int value : last28DaysMinutes()) if (value > 0) active++;
+        return active;
+    }
+
+    public int averageReadiness() {
+        List<Exam> exams = getUpcomingExams();
+        if (exams.isEmpty()) return 0;
+        int total = 0;
+        for (Exam e : exams) total += readinessForExam(e.id);
+        return Math.round(total / (float) exams.size());
+    }
+
+    public int examsNeedingAttention() {
+        int count = 0;
+        long now = System.currentTimeMillis();
+        for (Exam e : getUpcomingExams()) {
+            float days = Math.max(0f, (e.timeMillis - now) / 86_400_000f);
+            int readiness = readinessForExam(e.id);
+            if ((days <= 7 && readiness < 70) || (days <= 3 && readiness < 85)) count++;
+        }
+        return count;
     }
 
     public Map<String, Integer> focusMinutesBySubject() {
