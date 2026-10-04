@@ -88,7 +88,7 @@ public class ScreenTimeManager {
 
         long interactive = 0;
         int unlocks = 0;
-        try {
+        if (android.os.Build.VERSION.SDK_INT >= 28) try {
             List<EventStats> events = manager.queryEventStats(UsageStatsManager.INTERVAL_DAILY, start, end);
             if (events != null) for (EventStats e : events) {
                 if (e.getEventType() == UsageEvents.Event.SCREEN_INTERACTIVE) interactive += e.getTotalTime();

@@ -11,8 +11,9 @@ android {
         applicationId 'com.brace.examverse'
         minSdk 26
         targetSdk 35
-        versionCode 4
-        versionName '4.0.0'
+        versionCode 5
+        versionName '5.0.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     compileOptions {
@@ -30,6 +31,8 @@ android {
 }
 
 dependencies {
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     implementation 'androidx.activity:activity:1.10.1'
     implementation 'androidx.health.connect:connect-client:1.1.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0'

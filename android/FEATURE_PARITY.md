@@ -1,53 +1,20 @@
-# ExamVerse v3 capability map
+# ExamVerse v5 capabilities
 
-## Countdown / exam management
-- [x] Unlimited exams
-- [x] Live countdown
-- [x] Exam notes and categories
-- [x] Priority and difficulty
-- [x] Target score
-- [x] Flexible reminder lead time
-- [x] Edit / complete / reopen / delete
+The v5 application retains exam CRUD, priorities, reminders, syllabus management, readiness charts, focus history, goals, streaks, optional Health Connect and Usage Access.
 
-## Study planning
-- [x] Syllabus tracker
-- [x] Topic difficulty
-- [x] Topic confidence
-- [x] Estimated topic study time
-- [x] Smart revision-plan generation
-- [x] Daily missions
-- [x] Completion XP
-- [x] Exam readiness score
+Added in this release:
 
-## Focus / analytics
-- [x] 25 / 50 / 90 minute modes
-- [x] Exam/topic-linked sessions
-- [x] Partial session logging
-- [x] Daily focus goal
-- [x] Study streak
-- [x] XP / levels / ranks
-- [x] Seven-day chart
-- [x] Per-subject study totals
-- [x] Per-exam focus totals
+- Six illustrated theme worlds; five generated character scenes and one original cosmic landscape.
+- Foreground-service alarm playback independent of notification clicks.
+- Snooze/dismiss notification controls, persisted same-ID snooze and alarm readiness diagnostics.
+- Four size-aware widgets with 40dp resize minima and all six themes.
+- Persisted focus state, background completion, custom durations and uncredited recovery breaks.
+- Active-recall flashcards with self-graded spaced repetition.
+- Searchable, editable mistake notebook with flashcard conversion.
+- Manual revision missions and mission-linked focus setup.
+- Weak-topic ordering, workload-aware planning and overdue-task visibility.
+- Editable topic confidence and protection against repeated task XP rewards.
+- Versioned study backup/export and validated restore.
+- Android API compatibility fixes, system-bar handling and improved button contrast.
 
-## Themes
-- [x] Naruto-inspired Shinobi mode
-- [x] Dragon Ball-inspired Saiyan mode
-- [x] Bleach-inspired Soul Reaper mode
-- [x] Theme-specific abstract backdrop
-- [x] Theme-specific rank progression
-- [x] Theme-skinned widgets
-
-## Widgets
-- [x] Next Exam
-- [x] Live Countdown
-- [x] Upcoming Exams
-- [x] Daily Mission
-
-## Deliberately not included yet
-- [ ] Cloud account/sync
-- [ ] Shared study groups
-- [ ] AI-generated notes/quiz content
-- [ ] Calendar provider sync
-
-Those features require backend/API decisions and are not needed for the offline APK.
+Cloud synchronization, shared study groups, remote AI features and calendar-provider synchronization remain outside this offline release.

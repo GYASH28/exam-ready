@@ -73,14 +73,18 @@ public class MainActivity extends Activity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         repo = new ExamRepository(this);
+        restoreFocus();
         ThemeManager.applyWindow(this, getWindow());
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 91);
         }
+        currentTab=Math.max(0,Math.min(4,getIntent().getIntExtra("open_tab",0)));
         renderShell(); handler.post(ticker);
     }
 
-    @Override protected void onResume() { super.onResume(); if (repo != null) renderCurrentPage(); }
+    @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);currentTab=Math.max(0,Math.min(4,intent.getIntExtra("open_tab",0)));renderShell();}
+
+    @Override protected void onResume() { super.onResume(); if (repo != null) {restoreFocus();renderCurrentPage();} }
     @Override protected void onDestroy() { handler.removeCallbacks(ticker); if (focusTimer != null) focusTimer.cancel(); super.onDestroy(); }
 
     private final Runnable ticker = new Runnable() {
@@ -104,6 +108,7 @@ public class MainActivity extends Activity {
 
         LinearLayout app = column();
         app.setPadding(dp(14), dp(6), dp(14), dp(9));
+        outer.setOnApplyWindowInsetsListener((view,insets)->{if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=insets.getInsets(android.view.WindowInsets.Type.systemBars());app.setPadding(dp(14)+bars.left,dp(6)+bars.top,dp(14)+bars.right,dp(9)+bars.bottom);}return insets;});
         outer.addView(app, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         app.addView(buildTopBar());
@@ -266,7 +271,7 @@ public class MainActivity extends Activity {
         commandText.addView(text("TODAY'S COMMAND", 9.5f, p.primary, true));
         if (today.isEmpty()) {
             commandText.addView(text(repo.getTasks().isEmpty() ? "Build your revision map" : "Your board is clear", 17, p.text, true), top(2));
-            commandText.addView(text(repo.getTasks().isEmpty() ? "Add topics and let Smart Plan split the workload." : "Use the free space for a focused review sprint.", 10.5f, p.muted, false), top(2));
+            commandText.addView(text(repo.getTasks().isEmpty() ? "Add topics and let Smart Plan split the workload." : "Use the free space for active recall or a focused review sprint.", 10.5f, p.muted, false), top(2));
         } else {
             StudyTask first = today.get(0);
             commandText.addView(text(first.title, 17, p.text, true), top(2));
@@ -300,6 +305,13 @@ public class MainActivity extends Activity {
         quick.addView(plan, weightMargin(1f, 10, 0));
         box.addView(quick);
 
+        com.brace.examverse.study.LearningStore learning=new com.brace.examverse.study.LearningStore(this);
+        LinearLayout recall=card();
+        recall.addView(text("YOUR NEXT TRAINING ARC",10,p.primary,true));
+        recall.addView(text(learning.dueCards().size()+" recall cards due · "+learning.unresolvedMistakes()+" corrections",17,p.text,true),top(6));
+        recall.addView(text("Practice active recall and turn missed questions into a stronger next attempt.",11.5f,p.muted,false),top(4));
+        Button practice=actionButton("Open Study Lab →",p.surfaceAlt,p.text);practice.setOnClickListener(v->startActivity(new Intent(this,com.brace.examverse.study.StudyLabActivity.class)));recall.addView(practice,topHeight(10,48));box.addView(recall,top(12));
+
         List<Exam> exams = repo.getUpcomingExams();
         if (!exams.isEmpty()) {
             sectionTitle(box, "Readiness map", "Sooner exams move left. Higher readiness moves up. Larger dots mean higher priority.", p);
@@ -309,7 +321,7 @@ public class MainActivity extends Activity {
             box.addView(graphCard);
         }
 
-        sectionTitle(box, "Today's missions", "The smallest useful actions, already ordered for you.", p);
+        sectionTitle(box, "Today's missions", "Today and overdue work, ordered by urgency.", p);
         if (today.isEmpty()) {
             LinearLayout empty = card();
             empty.addView(text(repo.getTasks().isEmpty()
@@ -379,6 +391,8 @@ public class MainActivity extends Activity {
         Button gen = actionButton("✦ Regenerate", p.primary, contrastText(p.primary)); gen.setOnClickListener(v->{ int n=repo.generateSmartPlan(); Toast.makeText(this,n==0?"Add syllabus topics first":"Generated " + n + " missions",Toast.LENGTH_SHORT).show(); renderCurrentPage(); });
         Button addTopic = actionButton("＋ Topic", p.surface, p.text); addTopic.setOnClickListener(v->showAddTopicDialog()); actionRow.addView(gen, weightHeight(1f,46)); actionRow.addView(addTopic, weightLeftHeight(1f,8,46)); hero.addView(actionRow, top(12)); box.addView(hero, top(12));
 
+        Button capture=actionButton("＋ Add a revision mission",p.surfaceAlt,p.text);capture.setOnClickListener(v->showTaskDialog());box.addView(capture,topHeight(10,48));
+
         sectionTitle(box, "Mission queue", "Tap the checkbox when a study block is done.", p);
         List<StudyTask> tasks = repo.getTasks();
         if (tasks.isEmpty()) {
@@ -396,11 +410,19 @@ public class MainActivity extends Activity {
 
     private View taskCard(StudyTask task, boolean compact) {
         ThemeManager.Palette p = ThemeManager.palette(this); LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(10), dp(9), dp(8), dp(9)); row.setBackground(ThemeManager.rounded(p.surface, dp(18)));
-        CheckBox cb = new CheckBox(this); cb.setChecked(task.done); cb.setOnClickListener(v->{ repo.toggleTask(task.id); renderCurrentPage(); }); row.addView(cb, new LinearLayout.LayoutParams(dp(42), dp(42)));
+        CheckBox cb = new CheckBox(this); cb.setChecked(task.done); cb.setOnClickListener(v->{ repo.toggleTask(task.id); WidgetUpdater.updateAll(this);renderCurrentPage(); }); row.addView(cb, new LinearLayout.LayoutParams(dp(42), dp(42)));
         LinearLayout info = column(); Exam e = repo.getExam(task.examId); info.addView(text(task.title, compact ? 13.5f : 14.5f, task.done ? p.muted : p.text, true));
         String meta = (e == null ? "General" : e.subject) + " · " + task.minutes + "m · P" + task.priority + " · " + taskDateLabel(task.dueAt); info.addView(text(meta, 10.5f, p.muted, false), top(2)); row.addView(info, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        info.setOnClickListener(v->{if(focusRunning){Toast.makeText(this,"Pause or finish your active session first",Toast.LENGTH_SHORT).show();return;}focusPresetMs=task.minutes*60_000L;focusRemainingMs=focusPresetMs;focusExamId=task.examId;focusTopicId=task.topicId;focusMode="Revision";new com.brace.examverse.focus.FocusEngine(this).configure(focusPresetMs,focusMode);currentTab=2;renderShell();});
         if (!compact) { Button more = new Button(this); more.setText("⋮"); more.setTextSize(19); more.setTextColor(p.muted); more.setBackgroundColor(Color.TRANSPARENT); more.setOnClickListener(v->{ PopupMenu menu = new PopupMenu(this, more); menu.getMenu().add("Delete task"); menu.setOnMenuItemClickListener(i->{repo.deleteTask(task.id);renderCurrentPage();return true;}); menu.show(); }); row.addView(more, new LinearLayout.LayoutParams(dp(40),dp(40))); }
         return row;
+    }
+
+    private void showTaskDialog(){
+        ThemeManager.Palette p=ThemeManager.palette(this);LinearLayout fields=column();fields.setPadding(dp(18),dp(8),dp(18),dp(8));EditText name=field("Revision mission",p);fields.addView(name);
+        List<Exam> exams=repo.getUpcomingExams();String[] labels=new String[exams.size()+1];labels[0]="General study";for(int i=0;i<exams.size();i++)labels[i+1]=exams.get(i).subject;
+        Spinner exam=spinner(labels),duration=spinner(new String[]{"15 minutes","25 minutes","45 minutes","60 minutes","90 minutes"}),when=spinner(new String[]{"Today","Tomorrow","In 3 days","In a week"});fields.addView(exam,topHeight(8,48));fields.addView(duration,topHeight(8,48));fields.addView(when,topHeight(8,48));
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Add revision mission").setView(fields).setNegativeButton("Cancel",null).setPositiveButton("Add",null).create();dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{String title=name.getText().toString().trim();if(title.isEmpty()){name.setError("Give your mission a name");return;}int[] days={0,1,3,7},minutes={15,25,45,60,90};Calendar due=Calendar.getInstance();due.add(Calendar.DAY_OF_MONTH,days[when.getSelectedItemPosition()]);long examId=exam.getSelectedItemPosition()==0?-1:exams.get(exam.getSelectedItemPosition()-1).id;repo.saveTask(new StudyTask(System.currentTimeMillis(),examId,-1,title,due.getTimeInMillis(),minutes[duration.getSelectedItemPosition()],3,false,false));WidgetUpdater.updateAll(this);dialog.dismiss();renderCurrentPage();}));dialog.show();
     }
 
     private View syllabusExamCard(Exam e) {
@@ -416,8 +438,11 @@ public class MainActivity extends Activity {
         ThemeManager.Palette p = ThemeManager.palette(this); LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(8), dp(7), dp(7), dp(7)); row.setBackground(ThemeManager.rounded(p.surfaceAlt, dp(14)));
         CheckBox cb = new CheckBox(this); cb.setChecked(topic.done); cb.setOnClickListener(v->{ topic.done=cb.isChecked(); if (topic.done) {topic.confidence=Math.max(topic.confidence,4);topic.lastReviewedAt=System.currentTimeMillis();} repo.saveTopic(topic); renderCurrentPage(); }); row.addView(cb,new LinearLayout.LayoutParams(dp(42),dp(42)));
         LinearLayout info=column(); info.addView(text(topic.name,13,p.text,true)); info.addView(text(topic.estimatedMinutes+"m · difficulty "+topic.difficulty+"/5 · confidence "+topic.confidence+"/5",10,p.muted,false)); row.addView(info,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));
+        info.setOnClickListener(v->editTopic(topic));
         row.setOnLongClickListener(v->{ new AlertDialog.Builder(this).setTitle("Delete topic?").setMessage(topic.name).setNegativeButton("Cancel",null).setPositiveButton("Delete",(d,w)->{repo.deleteTopic(topic.id);renderCurrentPage();}).show();return true;}); return row;
     }
+
+    private void editTopic(Topic topic){ThemeManager.Palette p=ThemeManager.palette(this);LinearLayout fields=column();fields.setPadding(dp(16),dp(10),dp(16),dp(10));EditText name=field("Topic name",p);name.setText(topic.name);fields.addView(name);Spinner difficulty=spinner(new String[]{"Difficulty 1","Difficulty 2","Difficulty 3","Difficulty 4","Difficulty 5"}),confidence=spinner(new String[]{"Confidence 1 · New","Confidence 2","Confidence 3","Confidence 4","Confidence 5 · Mastered"});difficulty.setSelection(topic.difficulty-1);confidence.setSelection(topic.confidence-1);fields.addView(difficulty,topHeight(8,48));fields.addView(confidence,topHeight(8,48));new AlertDialog.Builder(this).setTitle("Update topic confidence").setView(fields).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{if(name.getText().toString().trim().isEmpty())return;topic.name=name.getText().toString().trim();topic.difficulty=difficulty.getSelectedItemPosition()+1;topic.confidence=confidence.getSelectedItemPosition()+1;repo.saveTopic(topic);WidgetUpdater.updateAll(this);renderCurrentPage();}).show();}
 
     private void showAddTopicDialog() {
         List<Exam> exams=repo.getUpcomingExams(); if(exams.isEmpty()){Toast.makeText(this,"Add an exam first",Toast.LENGTH_SHORT).show();return;}
@@ -500,6 +525,7 @@ public class MainActivity extends Activity {
         int examIndex = 0;
         for (int i = 0; i < exams.size(); i++) if (exams.get(i).id == focusExamId) examIndex = i + 1;
         examSpinner.setSelection(examIndex);
+        examSpinner.setEnabled(!focusRunning && focusRemainingMs==focusPresetMs);
         examSpinner.setOnItemSelectedListener(new SimpleItemSelected(pos -> {
             long nextId = pos == 0 ? -1 : exams.get(pos - 1).id;
             if (nextId != focusExamId) {
@@ -519,6 +545,7 @@ public class MainActivity extends Activity {
         int topicIndex = 0;
         for (int i = 0; i < focusTopics.size(); i++) if (focusTopics.get(i).id == focusTopicId) topicIndex = i + 1;
         topicSpinner.setSelection(topicIndex);
+        topicSpinner.setEnabled(!focusRunning && focusRemainingMs==focusPresetMs);
         topicSpinner.setOnItemSelectedListener(new SimpleItemSelected(pos -> {
             focusTopicId = pos == 0 ? -1 : focusTopics.get(pos - 1).id;
         }));
@@ -531,8 +558,8 @@ public class MainActivity extends Activity {
             if (focusRunning) pauseFocus(); else startFocus();
             renderCurrentPage();
         });
-        Button finish = actionButton("Finish + log", p.surfaceAlt, p.text);
-        finish.setOnClickListener(v -> finishFocusEarly());
+        Button finish = actionButton("Break".equals(focusMode)?"End break":"Finish + log", p.surfaceAlt, p.text);
+        finish.setOnClickListener(v -> {if("Break".equals(focusMode)){pauseFocus();new com.brace.examverse.focus.FocusEngine(this).configure(25*60_000L,"Pomodoro");restoreFocus();renderCurrentPage();}else finishFocusEarly();});
         controls.addView(start, weightHeight(1f, 50));
         controls.addView(finish, weightLeftHeight(1f, 8, 50));
         target.addView(controls, top(11));
@@ -541,6 +568,7 @@ public class MainActivity extends Activity {
             Button reset = actionButton("Reset timer", p.surfaceAlt, p.muted);
             reset.setOnClickListener(v -> {
                 focusRemainingMs = focusPresetMs;
+                new com.brace.examverse.focus.FocusEngine(this).reset();
                 renderCurrentPage();
             });
             target.addView(reset, topHeight(7, 44));
@@ -564,6 +592,7 @@ public class MainActivity extends Activity {
                     focusPresetMs = m * 60_000L;
                     focusRemainingMs = focusPresetMs;
                     focusMode = mo;
+                    new com.brace.examverse.focus.FocusEngine(this).configure(focusPresetMs,focusMode);
                     renderCurrentPage();
                 }
             });
@@ -572,6 +601,9 @@ public class MainActivity extends Activity {
             presets.addView(b, lp);
         }
         box.addView(presets);
+        Button custom=actionButton("Custom focus duration",p.surfaceAlt,p.text);custom.setOnClickListener(v->{if(focusRunning)return;EditText input=field("Minutes · 5 to 180",p);input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Your focus block").setView(input).setNegativeButton("Cancel",null).setPositiveButton("Set",null).create();dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(x->{try{int m=Integer.parseInt(input.getText().toString());if(m<5||m>180){input.setError("Choose 5–180 minutes");return;}focusPresetMs=m*60_000L;focusRemainingMs=focusPresetMs;focusMode="Custom";new com.brace.examverse.focus.FocusEngine(this).configure(focusPresetMs,focusMode);dialog.dismiss();renderCurrentPage();}catch(NumberFormatException e){input.setError("Enter a number");}}));dialog.show();});box.addView(custom,topHeight(8,48));
+        Button recovery=actionButton("Start a recovery break",p.surfaceAlt,p.text);recovery.setOnClickListener(v->{if(focusRunning)return;int minutes=focusPresetMs>=90*60_000L?20:focusPresetMs>=50*60_000L?10:5;focusPresetMs=minutes*60_000L;focusRemainingMs=focusPresetMs;focusMode="Break";focusExamId=-1;focusTopicId=-1;new com.brace.examverse.focus.FocusEngine(this).configure(focusPresetMs,focusMode);startFocus();renderCurrentPage();});box.addView(recovery,topHeight(8,48));
+
 
         sectionTitle(box, "Recent sessions", "Proof of work, not just plans.", p);
         List<StudySession> sessions = repo.getSessions();
@@ -584,9 +616,15 @@ public class MainActivity extends Activity {
     }
 
     private View sessionCard(StudySession s){ThemeManager.Palette p=ThemeManager.palette(this);LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(13),dp(10),dp(13),dp(10));row.setBackground(ThemeManager.rounded(p.surface,dp(17)));Exam e=repo.getExam(s.examId);Topic t=repo.getTopic(s.topicId);LinearLayout info=column();info.addView(text((e==null?"General":e.subject)+(t==null?"":" · "+t.name),13,p.text,true));info.addView(text(s.mode+" · "+new SimpleDateFormat("d MMM, h:mm a",Locale.getDefault()).format(new Date(s.startedAt)),10.5f,p.muted,false));row.addView(info,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));row.addView(text(s.minutes+"m",18,p.primary,true));return row;}
-    private void startFocus(){focusRunning=true;if(focusTimer!=null)focusTimer.cancel();focusTimer=new CountDownTimer(focusRemainingMs,1000){@Override public void onTick(long m){focusRemainingMs=m;if(focusTimeText!=null)focusTimeText.setText(formatFocus(m));}@Override public void onFinish(){focusRunning=false;focusRemainingMs=0;repo.recordFocus((int)(focusPresetMs/60_000L),focusExamId,focusTopicId,focusMode);Toast.makeText(MainActivity.this,"Focus mission complete ⚡ +XP",Toast.LENGTH_LONG).show();focusRemainingMs=focusPresetMs;if(currentTab==2)renderCurrentPage();}}.start();}
-    private void pauseFocus(){focusRunning=false;if(focusTimer!=null)focusTimer.cancel();}
-    private void finishFocusEarly(){long elapsed=focusPresetMs-focusRemainingMs;int mins=(int)(elapsed/60_000L);if(mins<1){Toast.makeText(this,"Study for at least one minute before logging",Toast.LENGTH_SHORT).show();return;}pauseFocus();repo.recordFocus(mins,focusExamId,focusTopicId,focusMode+" · partial");focusRemainingMs=focusPresetMs;Toast.makeText(this,mins+" focused minutes logged",Toast.LENGTH_SHORT).show();renderCurrentPage();}
+    private void restoreFocus(){
+        com.brace.examverse.focus.FocusEngine engine=new com.brace.examverse.focus.FocusEngine(this);boolean completed=engine.completeIfDue();com.brace.examverse.focus.FocusEngine.State state=engine.state();
+        focusPresetMs=state.preset;focusRemainingMs=state.remaining;focusExamId=state.examId;focusTopicId=state.topicId;focusMode=state.mode;focusRunning=state.running;
+        if(focusTimer!=null)focusTimer.cancel();if(focusRunning)runFocusTimer();if(completed)WidgetUpdater.updateAll(this);
+    }
+    private void startFocus(){new com.brace.examverse.focus.FocusEngine(this).start(focusPresetMs,focusRemainingMs,focusExamId,focusTopicId,focusMode);focusRunning=true;runFocusTimer();}
+    private void runFocusTimer(){if(focusTimer!=null)focusTimer.cancel();focusTimer=new CountDownTimer(Math.max(1,focusRemainingMs),1000){@Override public void onTick(long m){focusRemainingMs=new com.brace.examverse.focus.FocusEngine(MainActivity.this).state().remaining;if(focusTimeText!=null)focusTimeText.setText(formatFocus(focusRemainingMs));}@Override public void onFinish(){new com.brace.examverse.focus.FocusEngine(MainActivity.this).completeIfDue();focusRunning=false;focusRemainingMs=focusPresetMs;WidgetUpdater.updateAll(MainActivity.this);Toast.makeText(MainActivity.this,"Break".equals(focusMode)?"Break complete — choose your next focus block.":"Focus complete. Progress saved — time for a short break.",Toast.LENGTH_LONG).show();if(currentTab==2)renderCurrentPage();}}.start();}
+    private void pauseFocus(){new com.brace.examverse.focus.FocusEngine(this).pause();focusRunning=false;if(focusTimer!=null)focusTimer.cancel();}
+    private void finishFocusEarly(){int minutes=new com.brace.examverse.focus.FocusEngine(this).finishEarly();if(minutes<1){Toast.makeText(this,"Study for at least one minute before logging",Toast.LENGTH_SHORT).show();return;}focusRunning=false;if(focusTimer!=null)focusTimer.cancel();focusRemainingMs=focusPresetMs;WidgetUpdater.updateAll(this);Toast.makeText(this,minutes+" focused minutes saved",Toast.LENGTH_SHORT).show();renderCurrentPage();}
 
     // ---------------- Life OS: screen time + health + study intelligence ----------------
     private View buildLifePage() {
@@ -882,13 +920,24 @@ public class MainActivity extends Activity {
         tools2.addView(focusBtn, weightMargin(1f, 8, 0));
         box.addView(tools2);
 
-        sectionTitle(box, "Anime battle modes", "Each mode now changes the full atmosphere: color system, glass, motion, rank language and widgets.", p);
-        box.addView(themeCard("naruto", "Shinobi Ember", "Warm parchment, ember chakra and ink-seal motion", "Academy → Genin → Chunin → Jonin → Hokage",
+        Button studyLab=actionButton("Study Lab · flashcards & mistake notebook",p.surfaceAlt,p.text);studyLab.setOnClickListener(v->startActivity(new Intent(this,com.brace.examverse.study.StudyLabActivity.class)));box.addView(studyLab,topHeight(10,50));
+        sectionTitle(box,"Your data, in your hands","Save exams, plans, sessions, flashcards and notes to a file you choose.",p);
+        LinearLayout backups=new LinearLayout(this);Button export=actionButton("Export backup",p.surfaceAlt,p.text),restore=actionButton("Restore backup",p.surfaceAlt,p.text);
+        export.setOnClickListener(v->startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json").putExtra(Intent.EXTRA_TITLE,"ExamVerse-study-backup.json"),801));
+        restore.setOnClickListener(v->startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json"),802));
+        backups.addView(export,weightHeight(1,48));backups.addView(restore,weightLeftHeight(1,8,48));box.addView(backups,top(10));
+
+        sectionTitle(box, "Anime battle modes", "Six illustrated worlds with character scenes, signature motifs, ranks and matching widgets.", p);
+        box.addView(themeCard("naruto", "Naruto · Shinobi Ember", "Naruto, Hidden Leaf rooftops, Rasengan and ink seals", "Academy → Genin → Chunin → Jonin → Hokage",
                 Color.rgb(249,115,22), Color.rgb(127,29,29)), top(12));
-        box.addView(themeCard("dragonball", "Saiyan Energy", "Deep cosmic blue, gold energy and training-beam motion", "Trainee → Saiyan → Elite → Super Saiyan → Ultra Instinct",
+        box.addView(themeCard("dragonball", "Dragon Ball · Saiyan Energy", "Golden energy, cosmic training landscapes and energy arcs", "Trainee → Saiyan → Elite → Super Saiyan → Ultra Instinct",
                 Color.rgb(255,184,28), Color.rgb(37,99,235)), top(10));
-        box.addView(themeCard("bleach", "Soul Reaper Noir", "Ink black, crimson slash geometry and blade-light accents", "Soul Reaper → Seated Officer → Shikai → Bankai → Captain",
+        box.addView(themeCard("bleach", "Bleach · Soul Reaper", "Ichigo, moonlit rooftops, crimson slashes and blade light", "Soul Reaper → Seated Officer → Shikai → Bankai → Captain",
                 Color.rgb(244,63,94), Color.rgb(24,24,27)), top(10));
+
+        box.addView(themeCard("blackclover", "Black Clover · Grimoire", "Asta, anti-magic swords, emerald runes and a living grimoire", "Rookie → Magic Knight → Captain → Wizard King",0xff65e3a1,0xff9e3950),top(10));
+        box.addView(themeCard("demonslayer", "Demon Slayer · Water Breathing", "Tanjiro, water forms, wisteria and a checkered rhythm", "Final Selection → Slayer → Kinoe → Hashira",0xff55d8db,0xffd880a8),top(10));
+        box.addView(themeCard("onepiece", "One Piece · Grand Line", "Luffy, ocean horizons, compass routes and sunset sails", "Deckhand → Captain → Emperor → Pirate King",0xffffbe63,0xfff2675c),top(10));
 
         sectionTitle(box, "Daily training goal", "Mission Control and Focus use this to pace the day.", p);
         LinearLayout goal = card();
@@ -913,7 +962,7 @@ public class MainActivity extends Activity {
                 12.2f, p.text, false));
         box.addView(privacy);
 
-        TextView note = text("Fan-style theme names are for this private build. No copied character art, franchise screenshots or logos are bundled.", 10.3f, p.muted, false);
+        TextView note = text("Original generated fan-art scenes are bundled for this personal build. All study data stays on your device.", 10.3f, p.muted, false);
         box.addView(note, top(14));
         return scroll;
     }
@@ -924,7 +973,8 @@ public class MainActivity extends Activity {
 
         LinearLayout card = column();
         card.setPadding(dp(18), dp(16), dp(18), dp(16));
-        card.setBackground(ThemeManager.gradient(c1, c2, dp(25)));
+        card.setBackground(ThemeManager.artwork(this,key,dp(25)));
+        card.setMinimumHeight(dp(160));
         card.setElevation(selected ? dp(7) : dp(3));
 
         LinearLayout top = new LinearLayout(this);
@@ -970,6 +1020,12 @@ public class MainActivity extends Activity {
         return card;
     }
 
+    @Override protected void onActivityResult(int request,int result,Intent data){
+        super.onActivityResult(request,result,data);if(result!=RESULT_OK||data==null||data.getData()==null)return;
+        if(request==801){try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){out.write(com.brace.examverse.study.BackupStore.export(this).getBytes(java.nio.charset.StandardCharsets.UTF_8));Toast.makeText(this,"Study backup saved",Toast.LENGTH_LONG).show();}catch(Exception e){Toast.makeText(this,"Could not save backup",Toast.LENGTH_LONG).show();}}
+        else if(request==802){try(java.io.InputStream in=getContentResolver().openInputStream(data.getData())){java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] buffer=new byte[8192];int n;while((n=in.read(buffer))!=-1){if(out.size()+n>4_000_000)throw new java.io.IOException("Too large");out.write(buffer,0,n);}org.json.JSONObject backup=com.brace.examverse.study.BackupStore.validate(out.toString("UTF-8"));new AlertDialog.Builder(this).setTitle("Restore study backup?").setMessage("This replaces current exams, topics, revision plans, study history, flashcards and notes, and stops the current focus session. Export your current data first if you want to keep it.").setNegativeButton("Cancel",null).setPositiveButton("Restore",(d,w)->{try{pauseFocus();new com.brace.examverse.focus.FocusEngine(this).reset();getSharedPreferences("examverse_focus",0).edit().clear().apply();restoreFocus();for(Exam e:repo.getExams())ReminderScheduler.cancel(this,e.id);com.brace.examverse.study.BackupStore.restore(this,backup);for(Exam e:repo.getUpcomingExams())if(e.remind)ReminderScheduler.schedule(this,e);WidgetUpdater.updateAll(this);renderShell();Toast.makeText(this,"Study backup restored",Toast.LENGTH_LONG).show();}catch(Exception e){Toast.makeText(this,"Could not restore backup",Toast.LENGTH_LONG).show();}}).show();}catch(Exception e){Toast.makeText(this,"Invalid or unsupported study backup",Toast.LENGTH_LONG).show();}}
+    }
+
     // ---------------- UI helpers ----------------
 
     // ---------------- UI helpers ----------------
@@ -996,7 +1052,7 @@ public class MainActivity extends Activity {
     private LinearLayout.LayoutParams weightHeight(float w,int h){return new LinearLayout.LayoutParams(0,dp(h),w);}
     private LinearLayout.LayoutParams weightLeftHeight(float w,int left,int h){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(h),w);p.leftMargin=dp(left);return p;}
     private int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
-    private int contrastText(int bg){double y=(299*Color.red(bg)+587*Color.green(bg)+114*Color.blue(bg))/1000.0;return y>160?Color.rgb(17,24,39):Color.WHITE;}
+    private int contrastText(int bg){return ThemeManager.foreground(bg);}
     private String formatRemaining(long when,boolean detailed){long diff=Math.max(0,when-System.currentTimeMillis());long days=diff/86_400_000L;diff%=86_400_000L;long hours=diff/3_600_000L;diff%=3_600_000L;long mins=diff/60_000L;long sec=(diff%60_000L)/1000L;if(detailed){if(days>0)return days+"d  "+hours+"h  "+mins+"m";return hours+"h  "+mins+"m  "+sec+"s";}if(days>0)return days+"d "+hours+"h";if(hours>0)return hours+"h "+mins+"m";return mins+"m";}
     private String formatFocus(long ms){long total=Math.max(0,ms)/1000;return String.format(Locale.US,"%02d:%02d",total/60,total%60);}
     private String formatDate(long time){return new SimpleDateFormat("EEE, d MMM yyyy · h:mm a",Locale.getDefault()).format(new Date(time));}

@@ -21,8 +21,8 @@ class WidgetGlassRenderer {
         int minH = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 120);
 
         float d = c.getResources().getDisplayMetrics().density;
-        int w = Math.max(320, Math.min(900, Math.round(minW * d)));
-        int h = Math.max(180, Math.min(650, Math.round(minH * d)));
+        int w = Math.max(40, Math.min(900, Math.round(minW * d)));
+        int h = Math.max(40, Math.min(650, Math.round(minH * d)));
 
         Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(b);
@@ -67,6 +67,12 @@ class WidgetGlassRenderer {
         canvas.drawRoundRect(2 * d, 2 * d, w - 2 * d, h - 2 * d, r, r, p);
         p.setShader(null);
 
+        if (!"frost".equals(style.theme)) {
+            String key = "auto".equals(style.theme) ? new com.brace.examverse.data.ExamRepository(c).getTheme() : style.theme;
+            android.graphics.drawable.Drawable art = ThemeManager.artwork(c,key,r);
+            art.setBounds(0,0,w,h); art.setAlpha(Math.min(230,style.opacity)); art.draw(canvas);
+        }
+
         // Frost highlight and premium edge.
         p.setStyle(Paint.Style.STROKE);
         p.setStrokeWidth(1.25f * d);
@@ -99,6 +105,9 @@ class WidgetGlassRenderer {
         if ("naruto".equals(theme)) return Color.rgb(249, 115, 22);
         if ("dragonball".equals(theme)) return Color.rgb(255, 184, 28);
         if ("bleach".equals(theme)) return Color.rgb(244, 63, 94);
+        if ("blackclover".equals(theme)) return 0xff65e3a1;
+        if ("demonslayer".equals(theme)) return 0xff55d8db;
+        if ("onepiece".equals(theme)) return 0xffffbe63;
         if ("frost".equals(theme)) return Color.rgb(56, 189, 248);
         return ThemeManager.palette(c).primary;
     }
@@ -112,15 +121,15 @@ class WidgetGlassRenderer {
     }
 
     static int textColor(Context c, String theme) {
-        return isDark(c, theme) ? Color.WHITE : Color.rgb(15, 23, 42);
+        return "frost".equals(theme)?Color.rgb(15,23,42):Color.WHITE;
     }
 
     static int mutedColor(Context c, String theme) {
-        return isDark(c, theme) ? Color.rgb(203, 213, 225) : Color.rgb(71, 85, 105);
+        return "frost".equals(theme)?Color.rgb(71,85,105):Color.rgb(222,232,245);
     }
 
     private static boolean isDark(Context c, String theme) {
-        return "bleach".equals(theme) || "dragonball".equals(theme) ||
+        return "blackclover".equals(theme) || "demonslayer".equals(theme) || "onepiece".equals(theme) || "bleach".equals(theme) || "dragonball".equals(theme) ||
                 ("auto".equals(theme) && ThemeManager.palette(c).dark);
     }
 

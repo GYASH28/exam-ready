@@ -1,169 +1,124 @@
-# ExamVerse v4 — Exam Readiness OS
+# ExamVerse v5 — Anime Study OS
 
-ExamVerse is an original, offline-first Android exam countdown, revision planner, focus tracker and readiness dashboard. v4 turns the earlier utility-style app into a much more visual study OS with premium theme systems, richer analytics, better widgets and a clearer daily workflow.
+An offline Android exam planner, focus companion and active-recall workspace. v5 adds illustrated anime worlds, autonomous alarm playback, widgets that adapt to small tiles, durable focus sessions and a new Study Lab.
 
-The project does **not** copy LazyByte source code, private implementation, screenshots or bundled assets.
+## Download for Android
 
-## v4 highlights
+Download the installable **ExamVerse-v5.0.0.apk** from the [GitHub Releases page](https://github.com/GYASH28/exam-ready/releases). The release also contains a SHA-256 checksum. Android 8.0 or later is required.
 
-### Mission Control
-- Live next-exam countdown with date, priority, target score and readiness
-- Daily focus goal, streak and average readiness at a glance
-- "Today's Command" card that points to the most useful next action
-- One-tap Add Exam and Smart Plan actions
-- Upcoming exam cards with deadline and readiness context
-- New readiness map directly on the dashboard
+This is a signed personal/debug build, not a Play Store release. Android requires matching signing certificates to upgrade an existing installation. Earlier GitHub Actions builds generated a fresh debug key, so an older APK may have a different certificate. Preserve your existing data before removing an old installation; do not uninstall merely to bypass a signature error without a backup.
 
-### Study Intelligence
-ExamVerse now includes custom lightweight charts rather than a heavy chart dependency:
+## App preview
 
-- **7-day Focus Trend** — line + area visualization with an average line
-- **28-day Consistency Dot Graph** — dot size represents focused minutes
-- **Pressure vs Readiness Dot Graph**
-  - X axis = time until exam
-  - Y axis = readiness
-  - Dot size = exam priority
-  - Dot state reflects readiness risk
-- Per-exam readiness progress
-- Subject study-time balance
-- 7-day average focus
-- 28-day active-day count
-- "Needs attention" exam signal
+![ExamVerse v5 dashboard, Black Clover focus and Study Lab](docs/screenshots/v5-preview.png)
 
-### Smart Revision Planner
-- Syllabus topics belong to individual exams
-- Topic difficulty, confidence and estimated study time
-- Automatic revision-plan generation
-- Harder and higher-priority material receives more planning weight
-- Daily mission queue and XP rewards
-- Per-exam readiness tracking
+Screenshots use synthetic demonstration study data.
 
-### Focus Engine
-- 25/5 Pomodoro
-- 50/10 Long Focus
-- 90/20 Deep Work
-- Attach sessions to an exam and syllabus topic
-- Pause, reset or finish early and log productive time
-- Daily-goal progress and streak context
-- Real study-session history
+## Six illustrated worlds
 
-### Balance OS
-Optional on-device context lives beside study data without becoming a requirement.
+Every world includes a bundled WebP scene, readable image scrims on the dashboard and focus cards, its own colors, ambient motifs, progression ranks and widget artwork:
 
-**Android Usage Access**
-- Today's screen time
-- Unlock count
-- Top-used apps
-- App usage progress bars
+| World | Visual direction |
+| --- | --- |
+| Naruto · Shinobi Ember | Naruto, Hidden Leaf sunset, Rasengan, parchment and chakra seals |
+| Dragon Ball · Saiyan Energy | Original cosmic training landscape, golden energy and blue aura arcs |
+| Bleach · Soul Reaper | Ichigo, moonlit rooftops, ink-black surfaces and crimson blade light |
+| Black Clover · Grimoire | Asta, anti-magic sword, grimoire and emerald rune geometry |
+| Demon Slayer · Water Breathing | Tanjiro, water forms, wisteria and teal flowing lines |
+| One Piece · Grand Line | Luffy, sunset sails, ocean horizons and compass geometry |
 
-**Health Connect**
-- Steps
-- Sleep duration
-- Average heart rate
-- Calories burned
-- Exercise duration
+Five scenes are original generated character fan art. The Dragon Ball scene uses original environment artwork rather than a character image. Source images are bundled locally: themes work offline. Ambient motion follows Android's animation-scale setting; decoded images use a bounded shared cache.
 
-Both are opt-in. The planner, countdowns, analytics and focus system work without these permissions.
+## Alarms that ring automatically
 
-### Premium visual themes
+The alarm receiver starts a `mediaPlayback` foreground service. The service owns looping alarm audio, audio focus, vibration and a capped wake lock. Opening the notification is no longer required to begin playback, and leaving the ringing activity does not stop sound.
 
-Three full fan-style visual systems use original abstract graphics rather than copyrighted character art:
+- Snooze and dismiss from the notification or lock-screen controls.
+- Snooze preserves the original alarm ID and schedules ten minutes from the action, including seconds.
+- Once, daily and weekday rules remain available.
+- Re-schedule after reboot, app update, clock/timezone changes and exact-alarm access changes.
+- Invalid custom ringtone selection falls back to the system alarm tone.
+- Ringing stops after fifteen minutes if nobody dismisses it.
+- Alarm Studio shows exact scheduling, notification and full-screen access, with direct Settings links and a twenty-second test.
 
-- **Shinobi Ember** — warm parchment, ember orange, burgundy ink, seal/spiral motion
-- **Saiyan Energy** — deep cosmic blue, gold energy, cobalt beams and animated aura
-- **Soul Reaper Noir** — ink black, crimson slash geometry, blade-light accents
+Grant **Alarms & reminders** access for reliable background ringing. On newer Android versions, full-screen access controls whether the alarm screen opens; playback remains independent. When exact access is absent, Android can delay an approximate alarm or block a background service start; the app uses a sounding notification fallback. Alarm loudness follows the device's alarm volume and interruption settings.
 
-Themes now change:
-- full color system
-- glass surfaces
-- hero gradients
-- animated ambient backdrop
-- rank progression
-- motivational copy
-- widget styling
+The implementation follows Android's [foreground-service alarm exception](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start) and [foreground-service launch requirements](https://developer.android.com/develop/background-work/services/fgs/launch).
 
-The animation is intentionally subtle and lightweight so the app still behaves like a productivity tool.
+## Widgets that adapt to the available space
 
-### Widget Studio
+Next Exam, Live Countdown, Upcoming Exams and Daily Mission now declare 40dp resize minima, support both resize directions and rebuild on `onAppWidgetOptionsChanged`.
 
-Four Android home-screen widgets:
-- Next Exam
-- Live Countdown
-- Upcoming Exams
-- Daily Mission
+- Small tiles hide secondary labels, dates and extra rows.
+- Very short tiles show the essential countdown or mission value.
+- Live Countdown uses an Android Chronometer in roomier layouts and a compact remaining-time value in tiny layouts.
+- All six worlds are selectable independently for each widget.
+- Glass opacity, glow, corner shape and density remain configurable.
+- Daily Mission opens the Focus tab.
+- Widget deletion removes its saved style.
 
-Each installed widget can be customized independently:
-- theme
-- glass opacity
-- theme glow strength
-- corner softness
-- compact/detailed density
-- selected exam for live countdown
+The launcher decides grid dimensions and padding; 1×1 is available where the launcher permits it. Tiny static values update on the normal widget refresh or study-data changes; they do not run a permanent per-second background process. See Android's [flexible widget layout guidance](https://developer.android.com/develop/ui/views/appwidgets/layouts).
 
-Widgets also surface readiness information and use layered glass rendering instead of a flat background.
+## Study Lab
 
-### Alarm Studio
-- Exact custom alarms
-- Once, daily and weekday repeat rules
-- Snooze
-- Custom sound support
-- Re-scheduling after device restart
-- Exam reminders
+- Create question/answer flashcards by subject.
+- Reveal the answer before self-grading.
+- **Again:** review in ten minutes. **Good:** start at one day and double the interval. **Easy:** start at three days and triple it, capped at 180 days.
+- Search card prompts, answers and subjects.
+- Capture mistakes with a correction and reasoning.
+- Mark corrections resolved; long-press to edit, delete or turn one into a flashcard.
+- Mission Control surfaces due recall cards and unresolved mistakes.
 
-## Offline-first and privacy
+## Focus and revision improvements
 
-Core app data is stored locally on-device. The build requires no account, backend, ads or analytics SDK.
+- Persisted session deadline, exam/topic attribution, pause state and remaining duration.
+- Session recovery after reopening the app and completion notifications while away.
+- Idempotent recording prevents duplicate focus logs.
+- Custom 5–180-minute focus blocks and 5/10/20-minute recovery breaks.
+- Recovery breaks never add study minutes or XP.
+- Manual revision missions and one-tap mission-to-focus setup.
+- Difficult, low-confidence topics get earlier planning attention.
+- Smart Plan considers the daily goal and existing workload; very tight deadlines can still exceed the daily target.
+- Overdue tasks remain on today's board.
+- Topic name, difficulty and confidence can be edited.
+- Repeated completion toggles cannot farm task XP.
+- Streaks expire after missed days, using calendar dates rather than fixed 24-hour day arithmetic.
 
-Health Connect and Usage Access are optional Android permissions used only for the Balance OS features.
+Existing readiness charts, study history, syllabus management, Health Connect and optional on-device Usage Access remain available.
 
-## Source layout
+## Backup and privacy
 
-The normal Android Studio project now lives in:
+Studio can export a versioned JSON file containing exams, topics, revision tasks, study history, progress, flashcards and mistake notes. Restore validates the complete file before replacing local study data. Android's document picker lets the user choose the location.
 
-`android/`
+Alarms, Health Connect data, permissions, live focus state and launcher-specific widget IDs are not included in study backups. No account, backend, advertising or analytics SDK is required. Backups contain personal study information in readable JSON, so choose their storage location deliberately.
 
-Important areas:
+## Build and verify
 
-```text
-android/app/src/main/java/com/brace/examverse/
-├── MainActivity.java
-├── data/
-├── alarms/
-├── theme/
-├── visuals/
-├── wellness/
-└── widgets/
+Open `android/` in Android Studio or run with JDK 17, Gradle 8.11.1 and Android SDK 36:
+
+```bash
+cd android
+gradle :app:assembleDebug :app:lintDebug :app:assembleDebugAndroidTest
 ```
 
-## Build an installable APK
+APK output: `android/app/build/outputs/apk/debug/app-debug.apk`.
 
-### GitHub Actions
+Device regression suite: `android/app/src/androidTest/java/com/brace/examverse/widgets/UpgradeInstrumentedTest.java`. It checks image decoding, small RemoteViews layouts, recall intervals, backup validation, focus recovery, revision planning, XP integrity and background alarm playback. Run on a clean test device with notification and exact-alarm access enabled:
 
-The repository includes a workflow that compiles the normal `android/` source tree and uploads:
+```bash
+gradle :app:connectedDebugAndroidTest
+```
 
-`ExamVerse-v4.0.0.apk`
+The suite intentionally clears local study/alarm test data. Do not run it against a device holding data you need to preserve. For the alarm regression, deny full-screen intent access to prove audio starts without any screen or notification interaction.
 
-with a SHA-256 checksum.
+GitHub Actions compiles the APK and test APK and runs lint. It uploads an installable artifact plus checksum; the published release provides the APK as a direct download.
 
-### Android Studio
+## Build identity
 
-1. Open the `android/` folder in Android Studio.
-2. Use JDK 17.
-3. Install Android SDK Platform 36 and Build Tools 35.0.1.
-4. Sync Gradle.
-5. Run `assembleDebug` or choose **Build → Build APK(s)**.
-6. Debug APK output:
-   `android/app/build/outputs/apk/debug/app-debug.apk`
+- Package: `com.brace.examverse`
+- Version: `5.0.0` / version code `5`
+- Minimum Android: API 26
+- Target Android: API 35
+- Compile SDK: API 36
 
-## Android package
-
-`com.brace.examverse`
-
-- minSdk: 26
-- targetSdk: 35
-- compileSdk: 36
-- version: 4.0.0
-
-## Publishing note
-
-The current private-build theme names intentionally reference familiar anime inspiration, but the app does not bundle copied character artwork, screenshots or logos. For public store distribution, use properly licensed franchise branding or rename the themes to fully original branding.
+Character scenes are generated fan artwork for this personal build. Franchise rights remain with their owners; public commercial distribution needs appropriate branding and artwork rights.

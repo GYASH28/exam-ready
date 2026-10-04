@@ -11,9 +11,10 @@ import com.brace.examverse.alarms.CustomAlarmScheduler;
 
 public class BootReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
-        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+        if (intent.getAction() != null) {
             for (Exam e : new ExamRepository(context).getUpcomingExams()) if (e.remind) ReminderScheduler.schedule(context, e);
             CustomAlarmScheduler.rescheduleAll(context);
+            new com.brace.examverse.focus.FocusEngine(context).reschedule();
             WidgetUpdater.updateAll(context);
         }
     }

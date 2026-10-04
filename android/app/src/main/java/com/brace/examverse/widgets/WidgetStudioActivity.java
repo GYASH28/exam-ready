@@ -64,7 +64,7 @@ public class WidgetStudioActivity extends Activity {
         st.addView(t(items.isEmpty() ? "Add one from your Android home screen." : "Tap a tile below to tune it.", 10.8f, p.muted, false), top(2));
         sr.addView(st, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-        TextView badge = t("GLASS V4", 9.5f, p.primary, true);
+        TextView badge = t("ANIME V5", 9.5f, p.primary, true);
         badge.setLetterSpacing(.08f);
         badge.setPadding(dp(10), dp(6), dp(10), dp(6));
         badge.setBackground(ThemeManager.glowChip(this, dp(14)));
@@ -117,7 +117,7 @@ public class WidgetStudioActivity extends Activity {
 
         LinearLayout help = card(p);
         help.addView(t("Widget tips", 13, p.text, true));
-        help.addView(t("• Use Compact for small 2×1 tiles\n• Raise opacity on busy wallpapers\n• Lower glow for a clean minimal setup\n• Use softer corners for a true glass-card look", 11.2f, p.muted, false), top(5));
+        help.addView(t("• Resize down to 1×1 on supported launchers\n• Tiles adapt automatically when resized\n• Raise opacity on busy wallpapers\n• Lower glow for a clean minimal setup\n• Use softer corners for a true glass-card look", 11.2f, p.muted, false), top(5));
         root.addView(help, top(12));
 
         setContentView(sc);
@@ -151,6 +151,7 @@ public class WidgetStudioActivity extends Activity {
         if ("dragonball".equals(t)) return "Saiyan Energy";
         if ("bleach".equals(t)) return "Soul Reaper Noir";
         if ("frost".equals(t)) return "Clear Frost";
+        if(!"auto".equals(t))return ThemeManager.displayName(t);
         return "Auto";
     }
 

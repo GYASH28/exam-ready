@@ -66,9 +66,9 @@ public class WidgetConfigActivity extends Activity {
                 "Shinobi Ember",
                 "Saiyan Energy",
                 "Soul Reaper Noir",
-                "Clear Frost"
+                "Black Clover · Grimoire", "Demon Slayer · Water Breathing", "One Piece · Grand Line", "Clear Frost"
         };
-        String[] keys = {"auto", "naruto", "dragonball", "bleach", "frost"};
+        String[] keys = {"auto", "naruto", "dragonball", "bleach", "blackclover", "demonslayer", "onepiece", "frost"};
         Spinner theme = spinner(themes, p);
         int ti = 0;
         for (int i = 0; i < keys.length; i++) if (keys[i].equals(current.theme)) ti = i;

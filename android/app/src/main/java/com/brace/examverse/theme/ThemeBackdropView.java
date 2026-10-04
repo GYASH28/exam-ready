@@ -13,9 +13,16 @@ import com.brace.examverse.data.ExamRepository;
 public class ThemeBackdropView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
+    private final android.graphics.drawable.Drawable artwork;
+    private final String theme;
+    private final ThemeManager.Palette palette;
 
     public ThemeBackdropView(Context context) {
         super(context);
+        theme = new ExamRepository(context).getTheme();
+        palette = ThemeManager.palette(context);
+        artwork = ThemeManager.artwork(context);
+        artwork.setAlpha(38);
         setClickable(false);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
@@ -24,18 +31,20 @@ public class ThemeBackdropView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float phase = (SystemClock.uptimeMillis() % 18000L) / 18000f;
-        String theme = new ExamRepository(getContext()).getTheme();
+        artwork.setBounds(0, 0, getWidth(), getHeight());
+        artwork.draw(canvas);
         if ("bleach".equals(theme)) drawBleach(canvas, phase);
         else if ("dragonball".equals(theme)) drawDragonBall(canvas, phase);
-        else drawNaruto(canvas, phase);
+        else if ("naruto".equals(theme)) drawNaruto(canvas, phase);
+        else drawWorld(canvas, phase);
 
         // The artwork is deliberately slow and subtle. ~20 fps keeps the premium motion
         // without turning a study screen into a battery-hungry game loop.
-        if (isShown()) postInvalidateDelayed(48);
+        if (isShown() && android.provider.Settings.Global.getFloat(getContext().getContentResolver(), android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0) postInvalidateDelayed(80);
     }
 
     private void drawNaruto(Canvas c, float phase) {
-        ThemeManager.Palette p = ThemeManager.palette(getContext());
+        ThemeManager.Palette p = palette;
         int w = getWidth(), h = getHeight();
 
         paint.setStyle(Paint.Style.FILL);
@@ -87,7 +96,7 @@ public class ThemeBackdropView extends View {
     }
 
     private void drawDragonBall(Canvas c, float phase) {
-        ThemeManager.Palette p = ThemeManager.palette(getContext());
+        ThemeManager.Palette p = palette;
         int w = getWidth(), h = getHeight();
 
         paint.setStyle(Paint.Style.FILL);
@@ -126,7 +135,7 @@ public class ThemeBackdropView extends View {
     }
 
     private void drawBleach(Canvas c, float phase) {
-        ThemeManager.Palette p = ThemeManager.palette(getContext());
+        ThemeManager.Palette p = palette;
         int w = getWidth(), h = getHeight();
 
         paint.setStyle(Paint.Style.FILL);
@@ -168,6 +177,20 @@ public class ThemeBackdropView extends View {
             float y = (((i * 163) + phase * dp(32 + i % 5)) % Math.max(1, h - dp(12))) + dp(6);
             paint.setColor(ThemeManager.withAlpha(i % 5 == 0 ? p.primary : Color.WHITE, 10 + (i % 4) * 4));
             c.drawCircle(x, y, dp(i % 6 == 0 ? 2f : 1f), paint);
+        }
+    }
+
+    private void drawWorld(Canvas c, float phase) {
+        paint.setStyle(Paint.Style.STROKE); paint.setColor(ThemeManager.withAlpha(palette.primary, 48)); paint.setStrokeWidth(dp(1));
+        if ("blackclover".equals(theme)) {
+            float cx=getWidth()*.82f,cy=getHeight()*.20f,r=dp(80);
+            c.drawCircle(cx,cy,r,paint);c.drawCircle(cx,cy,r*.75f,paint);
+            for(int i=0;i<5;i++){float angle=(float)(i*Math.PI*2/5+phase*.4); c.drawOval(cx+(float)Math.cos(angle)*r*.3f-dp(12),cy+(float)Math.sin(angle)*r*.3f-dp(20),cx+(float)Math.cos(angle)*r*.3f+dp(12),cy+(float)Math.sin(angle)*r*.3f+dp(20),paint);}
+        } else if ("demonslayer".equals(theme)) {
+            for(int i=0;i<8;i++){path.reset();float y=getHeight()*.15f+i*dp(95);path.moveTo(0,y);path.cubicTo(getWidth()*.3f,y-dp(60),getWidth()*.65f,y+dp(60),getWidth(),y);c.drawPath(path,paint);}
+        } else {
+            float cx=getWidth()*.8f,cy=getHeight()*.18f,r=dp(85);c.drawCircle(cx,cy,r,paint);
+            for(int i=0;i<8;i++){double a=i*Math.PI/4; c.drawLine(cx,cy,cx+(float)Math.cos(a)*r,cy+(float)Math.sin(a)*r,paint);}
         }
     }
 

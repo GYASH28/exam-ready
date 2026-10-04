@@ -1,28 +1,35 @@
 package com.brace.examverse.alarms;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
+import android.app.*;
+import android.content.*;
 import android.media.AudioAttributes;
-import android.net.Uri;
-import android.os.Build;
+import android.media.RingtoneManager;
 import androidx.core.app.NotificationCompat;
 import com.brace.examverse.R;
 
 public class CustomAlarmReceiver extends BroadcastReceiver {
-    public static final String CHANNEL="examverse_alarm_clock";
-    @Override public void onReceive(Context c,Intent intent){
-        long id=intent.getLongExtra("alarm_id",-1);CustomAlarmRepository repo=new CustomAlarmRepository(c);CustomAlarm a=repo.get(id);if(a==null||!a.enabled)return;
-        Intent ring=new Intent(c,AlarmRingingActivity.class);ring.putExtra("alarm_id",id);ring.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent full=PendingIntent.getActivity(c,(int)id,ring,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-        NotificationManager nm=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
-        if(Build.VERSION.SDK_INT>=26){NotificationChannel ch=new NotificationChannel(CHANNEL,"ExamVerse alarms",NotificationManager.IMPORTANCE_HIGH);ch.setDescription("Custom study and wake alarms");ch.enableVibration(a.vibrate);ch.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);nm.createNotificationChannel(ch);}
-        NotificationCompat.Builder b=new NotificationCompat.Builder(c,CHANNEL).setSmallIcon(R.drawable.ic_app).setContentTitle(a.label).setContentText("ExamVerse alarm · tap to dismiss or snooze").setPriority(NotificationCompat.PRIORITY_MAX).setCategory(NotificationCompat.CATEGORY_ALARM).setAutoCancel(false).setOngoing(true).setFullScreenIntent(full,true).setContentIntent(full).setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
-        nm.notify((int)(id&0x7fffffff),b.build());
-        if("once".equals(a.repeat)){a.enabled=false;repo.save(a);}else CustomAlarmScheduler.schedule(c,a);
+    @Override public void onReceive(Context c, Intent intent) {
+        long id = intent.getLongExtra("alarm_id", -1);
+        boolean snoozed = intent.getBooleanExtra("snoozed", false);
+        CustomAlarmRepository repo = new CustomAlarmRepository(c);
+        CustomAlarm a = repo.get(id);
+        if (a == null || (!a.enabled && !snoozed) || (snoozed && CustomAlarmScheduler.snoozeTime(c, id) == 0)) return;
+        if (snoozed) CustomAlarmScheduler.clearSnooze(c, id);
+        try { c.startForegroundService(new Intent(c, AlarmPlaybackService.class).setAction(AlarmPlaybackService.RING).putExtra("alarm_id", id)); }
+        catch (RuntimeException blocked) {
+            // Inexact alarms cannot always start an FGS from the background. A sounding
+            // notification is a fallback; Alarm Studio explains how to grant exact access.
+            NotificationManager nm = (NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channel = new NotificationChannel("examverse_alarm_fallback_v5", "Approximate alarm fallback", NotificationManager.IMPORTANCE_HIGH);
+            channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build());
+            channel.enableVibration(a.vibrate); nm.createNotificationChannel(channel);
+            Intent screen = new Intent(c, AlarmRingingActivity.class).putExtra("alarm_id", id).putExtra("fallback", true);
+            PendingIntent full = PendingIntent.getActivity(c, (int)id, screen, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            nm.notify((int)(id & 0x7fffffff), new NotificationCompat.Builder(c, channel.getId()).setSmallIcon(R.drawable.ic_app).setContentTitle(a.label).setContentText("Enable precise alarms for continuous automatic ringing").setCategory(NotificationCompat.CATEGORY_ALARM).setPriority(NotificationCompat.PRIORITY_MAX).setContentIntent(full).setFullScreenIntent(full,true).build());
+        }
+        if (!snoozed) {
+            if ("once".equals(a.repeat)) { a.enabled = false; repo.save(a); }
+            else CustomAlarmScheduler.schedule(c, a);
+        }
     }
 }

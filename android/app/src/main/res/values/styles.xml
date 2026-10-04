@@ -3,8 +3,20 @@
         <item name="android:fontFamily">sans</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowActionModeOverlay">true</item>
-        <item name="android:colorAccent">#F97316</item>
+        <item name="android:colorAccent">#C2410C</item>
         <item name="android:navigationBarColor">#FFFFFF</item>
         <item name="android:windowBackground">#FFF8F0</item>
     </style>
+    <style name="AppThemeDark" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:navigationBarColor">#0A1614</item>
+        <item name="android:windowBackground">#0A1614</item>
+    </style>
+    <style name="ThemeDragonBall" parent="AppThemeDark"><item name="android:colorAccent">#FFB81C</item></style>
+    <style name="ThemeBleach" parent="AppThemeDark"><item name="android:colorAccent">#F43F5E</item></style>
+    <style name="ThemeBlackClover" parent="AppThemeDark"><item name="android:colorAccent">#65E3A1</item></style>
+    <style name="ThemeDemonSlayer" parent="AppThemeDark"><item name="android:colorAccent">#55D8DB</item></style>
+    <style name="ThemeOnePiece" parent="AppThemeDark"><item name="android:colorAccent">#FFBE63</item></style>
 </resources>
