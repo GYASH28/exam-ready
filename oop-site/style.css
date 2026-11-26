@@ -265,3 +265,157 @@ nav .nav-group:first-child{padding-top:0}
 .saved-links{max-height:200px;overflow:auto;margin:8px 0}
 .saved-links .search-hit{padding:7px;line-height:1.4}
 @media(max-width:760px){.desk-kicker .eyebrow:last-child{display:none}.new-hero{grid-template-columns:1fr;min-height:unset;padding:19px}.new-hero h1{font-size:3.4rem}.new-hero p{font-size:13px}.new-visual{min-height:226px;padding:16px 4px 8px}.blueprint{width:230px;transform:rotate(2deg)}.hero-sticker{right:9px;bottom:6px}.continue-label{margin-top:15px}.dashboard-metrics .card{padding:14px}.dashboard-metrics .stat{font-size:24px}.refined-unit{padding:16px}.unit-heading{margin:12px 0 6px}.unit-actions button{flex:0 1 auto;padding:8px 12px}}
+
+/* ISSUE 03 — CAMPUS COMIC ARCADE. No green dashboard palette. */
+:root{--paper:#fff2df;--card:#fffbf1;--book:#fffdf7;--ink:#292238;--muted:#74677d;--line:#d9c9c5;--mint:#ffce53;--yellow:#ffc84c;--dark:#292238;--shadow:3px 3px 0 #292238;--accent:#6845bd;--comic-ink:#292238;--comic-pink:#ffabc5;--comic-purple:#c9b6ff;--comic-orange:#ff8d73;--comic-yellow:#ffd354;--comic-stroke:#292238}
+body{background-color:var(--paper);background-image:radial-gradient(#9b795417 .75px,transparent .75px);background-size:13px 13px;line-height:1.6}
+body.night{--paper:#211c2d;--card:#30283c;--book:#30283a;--ink:#f7eadb;--muted:#c3b4c7;--line:#51435d;--accent:#d3baff;--shadow:3px 3px 0 #120f19;--comic-stroke:#a18cb3}
+h1,h2,h3,.brand{font-family:'Space Grotesk','DM Sans',system-ui,sans-serif;letter-spacing:-.045em}
+#sidebar{background:#292238;color:#fff3e2;border-right:2px solid #1b1628;padding:21px 13px;width:224px}
+.workspace{margin-left:224px}
+.brand{font-size:24px;color:#fff5dc;line-height:.95;margin-left:8px;letter-spacing:-.065em}
+.logo{background:#ffce53;color:#292238;border:2px solid #100d17;box-shadow:3px 3px 0 #ffabc5;transform:rotate(-7deg);border-radius:9px;font-size:24px}
+.brandstar{color:#ffabc5}.side-label{color:#c1b0cb;letter-spacing:.1em}
+.nav-group{color:#b3a1be;font-size:9px;letter-spacing:.13em;padding-top:12px}
+nav a{color:#f0e5ef;padding:9px 10px;border:1px solid transparent;line-height:1.35}
+nav a:hover{background:#493b5e;color:#fff7e4}
+nav a.active,nav a.active:hover{background:#ffce53;color:#292238;border:1px solid #1b1628;box-shadow:2px 2px 0 #130f1c}
+.sidefoot{background:#3e304f;border:1px solid #735d85;border-radius:9px;color:#fff1df;box-shadow:2px 3px #171221}
+.sidefoot span{color:#d2bbdf}.sidefoot b{color:#ffce53}.sidefoot small{color:#cfc0d8}
+header{background:var(--paper);border-bottom:2px solid var(--comic-stroke)}
+#location{color:var(--muted);font-weight:800;letter-spacing:.13em}
+.headright button{border:1px solid var(--comic-stroke);border-radius:7px;box-shadow:1px 2px 0 var(--comic-stroke)}
+#focus{color:var(--accent);font-weight:800}
+main{padding-top:25px}
+.card{border:1.5px solid var(--comic-stroke);border-radius:10px;box-shadow:var(--shadow);background:var(--card)}
+button{border:1px solid var(--line);border-radius:7px;font-weight:650}
+button:hover{background:var(--paper);border-color:var(--comic-stroke)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #b085fa;outline-offset:3px}
+button.primary{background:#ffcc53;color:#292238;border:1.5px solid #292238;box-shadow:2px 2px 0 #292238}
+button.primary:hover{background:#ffe18e;border-color:#292238;transform:translate(-1px,-1px);box-shadow:3px 3px 0 #292238}
+button.primary:active{transform:translate(2px,2px);box-shadow:none}
+button.secondary{background:#ffadc6;color:#292238;border:1.5px solid #292238;box-shadow:2px 2px 0 #292238}
+button.secondary:hover{background:#ffc8d8;border-color:#292238}
+button.active{background:#6b4bb4;color:#fff9eb;border-color:#6b4bb4}
+button.quiet{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.quiet:hover{background:var(--paper);border-color:var(--accent)}
+button:disabled{opacity:.55;box-shadow:none}
+.bar{height:8px;background:var(--line);border:1px solid var(--line);border-radius:5px}
+.bar i{background:#9876df}
+.pill{background:var(--paper);border-color:var(--line)}
+.desk-kicker{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--muted)}
+.comic-hero{position:relative;display:grid;grid-template-columns:1.05fr 1fr;align-items:center;gap:10px;background:#cbb9ff;color:#292238;border:2px solid #292238;box-shadow:6px 6px 0 #292238;border-radius:13px;padding:30px 28px;margin:0 4px 27px 0;overflow:hidden;isolation:isolate}
+.comic-hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(#29223820 1px,transparent 1px);background-size:9px 9px;opacity:.45;mask-image:linear-gradient(110deg,transparent 25%,#000 95%);z-index:-1}
+.comic-copy{position:relative;z-index:1;min-width:0}
+.comic-kicker{display:inline-block;background:#fff7dd;border:1.5px solid #292238;box-shadow:2px 2px #292238;color:#292238;padding:5px 8px;transform:rotate(-2deg);font-size:10px;font-weight:850;letter-spacing:.09em}
+.comic-hero h1{font-size:clamp(3.3rem,6.5vw,6.5rem);font-weight:750;letter-spacing:-.085em;line-height:.95;margin:18px 0 16px;color:#292238}
+.comic-hero h1 span{font-size:.72em;white-space:nowrap}
+.comic-hero h1 i{font-family:Georgia,serif;font-weight:700;letter-spacing:-.08em;color:#a52b50;font-style:italic}
+.comic-hero p{font-size:14px;line-height:1.6;color:#46365b;max-width:370px;margin-bottom:17px}
+.comic-buttons{gap:10px}
+.comic-buttons button{padding:10px 13px;font-size:12px}
+.comic-buttons .primary{background:#292238;color:#ffecb3;border-color:#292238;box-shadow:3px 3px 0 #ffcf51}
+.comic-buttons .primary:hover{background:#493665;color:#fff4c9;box-shadow:3px 3px 0 #ffcf51}
+.comic-buttons .secondary{background:#ffcf51}
+.resume-strip{margin-top:19px;border-top:1.5px dashed #7968a3;display:grid;gap:2px;padding-top:12px}
+.resume-strip small{font-size:9px;font-weight:850;letter-spacing:.13em;color:#5a477f}
+.resume-strip b{font-size:12px;color:#362a50}
+.comic-art{position:relative;min-width:0;display:grid;place-items:center;align-self:center}
+.hero-comic{display:block;width:100%;max-width:540px;overflow:visible;height:auto;filter:drop-shadow(3px 5px 0 #29223819);animation:comic-pop .55s cubic-bezier(.2,.8,.25,1) both}
+@keyframes comic-pop{from{opacity:0;transform:translateY(7px) rotate(-2deg)}to{opacity:1;transform:translateY(0) rotate(0)}}
+.hero-issue{position:absolute;bottom:10px;right:11px;background:#ffadc6;border:1.5px solid #292238;border-radius:5px;box-shadow:2px 2px #292238;padding:7px 9px;font-size:9px;font-weight:850;letter-spacing:.08em;line-height:1.15;transform:rotate(4deg);z-index:1}
+.dashboard-metrics{gap:12px}
+.dashboard-metrics .meter-card{display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:9px}
+.meter-icon{width:37px;height:37px;display:grid;place-items:center;background:#ffe5ac;border:1px solid #292238;border-radius:7px;flex-shrink:0;font-size:19px}
+.meter-card:nth-child(2) .meter-icon{background:#ffd0dd}.meter-card:nth-child(3) .meter-icon{background:#d8cbff}.meter-card:nth-child(4) .meter-icon{background:#ffd0b8}
+.dashboard-metrics .stat{font-size:25px;line-height:1.1;letter-spacing:-.045em}
+.dashboard-metrics small{font-size:10px;line-height:1.4;display:block;margin-top:4px}
+.unit-section-title{margin-top:30px;margin-bottom:14px}
+.unit-section-title .eyebrow{color:var(--accent)}
+.unit-section-title h2{font-size:1.8rem;letter-spacing:-.055em}
+.comic-ticket{background:#ffcf51;color:#292238;display:inline-block;border:1.5px solid #292238;box-shadow:2px 2px #292238;padding:6px 9px;border-radius:4px;font-size:10px;font-weight:850;letter-spacing:.07em;transform:rotate(2deg)}
+.unit-grid{gap:17px}
+.quest-card{padding:0;border:1.7px solid var(--comic-stroke);overflow:hidden;border-radius:10px;box-shadow:3px 3px var(--comic-stroke);transition:transform .18s,box-shadow .18s}
+.quest-card:hover{transform:translate(-2px,-2px);box-shadow:5px 5px var(--comic-stroke)}
+.quest-banner{position:relative;min-height:112px;background:var(--unit-color);color:#292238;padding:12px 12px 16px;overflow:hidden;border-bottom:1.7px solid #292238;background-image:radial-gradient(#29223820 .9px,transparent .9px);background-size:9px 9px}
+.quest-level{font:800 11px/1.2 'Space Grotesk',system-ui,sans-serif;letter-spacing:.1em}
+.quest-mark{position:absolute;right:10px;top:10px;font:800 9px 'DM Sans',system-ui,sans-serif;background:#fff9e9;border:1px solid #292238;border-radius:4px;padding:4px 7px}
+.unit-doodle{width:75px;height:72px;position:absolute;right:12px;bottom:5px;transform:rotate(-9deg);filter:drop-shadow(2px 2px 0 #29223820)}
+.quest-joke{position:absolute;left:12px;bottom:12px;font:700 13px/1.15 'Space Grotesk',system-ui,sans-serif;max-width:60%;letter-spacing:-.03em}
+.quest-content{padding:16px 14px 17px}
+.quest-content h3{font-size:1.08rem;font-weight:750;line-height:1.25;margin:0 0 6px;min-height:2.5em}
+.quest-content p{font-size:11px;color:var(--muted);margin:0 0 10px}
+.quest-content small{font-size:10px}
+.quest-content .unit-actions{margin-top:13px}
+.quest-content .unit-actions button{padding:8px 7px;font-size:11px}
+.study-priority{background:var(--card)}
+.exam-card{border-top:5px solid #ff987c}.streak-card{border-top:5px solid #bca3f6}
+.study-priority h3{font-size:1.25rem}.study-priority .mini-label{color:var(--accent)}
+/* Keep the reader quieter than the arcade, with a warm book-paper surface. */
+.reader-heading{border-bottom:1px solid var(--line)}
+.reader-heading h1{letter-spacing:-.06em}
+.reader-units button{border:1px solid var(--line);background:var(--card)}
+.reader-units button.active{background:#6b4bb4;color:#fff9ef;border-color:#6b4bb4}
+.unit-num{background:#ffe3ad;color:#382a43;border-color:#e6c58b}
+.reader-units .active .unit-num{background:#ffce53;color:#292238;border-color:#292238}
+.reader-outline,.margin-card{border:1px solid var(--line);background:var(--card);border-radius:9px}
+.outline-top h3 span{color:var(--muted)}
+.chapter-link.selected{background:#e9ddff;border-color:#c6aef4;color:#442b76}
+.chapter-link.selected small,.chapter-link.selected>span:first-child{color:#6a5392}
+.chapter-link i{color:#7851c6}
+body.night .chapter-link.selected{background:#493568;border-color:#8065ad;color:#f3e8ff}
+body.night .chapter-link.selected small,body.night .chapter-link.selected>span:first-child{color:#d0bbe8}
+.reader-mode button.active{background:#6b4bb4;color:#fff9f1}
+.reading-sheet{border:1px solid var(--line);background:var(--book);box-shadow:0 4px 0 #8c6f7a1a;border-radius:10px}
+.reading-actions{background:var(--card)}
+.reading-body{font-family:Georgia,'Times New Roman',serif;line-height:1.85}
+.reading-lead{border-left:3px solid #bb9ae9}
+.reading-title .chapter-index{color:var(--accent)}
+.study-label{border-color:var(--line)}
+.book-table th{background:#eee1ff;color:#493071;border-color:#d2bce9}
+body.night .book-table th{background:#503a70;color:#f5eaff;border-color:#8065ad}
+.inline-figure{background:var(--paper);border:1px dashed var(--line)}
+.figure-node{background:#e9ddff;color:#3c285d;border-color:#bda4e8}
+.figure-node small{color:#785e9d}.figure-node span{color:#644b89}
+.memory-figure .selected-cell{background:#ffda83;color:#292238;border-color:#bf9651}
+.code-panel{background:#252037;border-color:#423454;color:#f6ebde}
+.code-toolbar{background:#3b2d51;border-color:#5d4979;color:#cfc1e2}
+.code-toolbar span:first-child{color:#ffce53}
+.code-panel .code{color:#f7e7d7}
+.line-no{color:#a795c0}
+.code,.terminal{background:#252037;color:#f8e7c4;border-color:#4c3d64}
+.terminal{color:#ffdf93}
+.exam-note{background:#fff0c8;border-color:#ebcf8b;border-left-color:#ce9a43;color:#594226}
+.pitfall{background:var(--paper);border-color:var(--line)}
+.pitfall>b{color:var(--accent)}
+.book-highlight{background:#ffde75;color:#292238}
+.annotation blockquote{background:#ffe6a1;color:#503c24;border-left-color:#d7ae60}
+.recall-item summary{color:var(--ink)}
+/* Existing study games and utilities inherit the comic UI. */
+.quizbox{max-width:780px}
+.opt{border:1.5px solid var(--line);box-shadow:0 2px 0 #745e7e20;background:var(--card)}
+.opt:hover{background:var(--paper);border-color:var(--accent)}
+.opt b{background:var(--paper);border-color:var(--line)}
+.opt.right{background:#e5edbb;color:#3c4823;border-color:#83935b}
+.opt.wrong{background:#ffc7cf;color:#722f48;border-color:#bc6f87}
+.opt.selected{outline:2px solid #ac88ee}
+.callout{border-left:3px solid #b394e8;background:var(--paper)}
+.flip{border:2px solid var(--comic-stroke);box-shadow:4px 4px 0 var(--comic-stroke);background:var(--card);position:relative}
+.flip:before{content:"✳";position:absolute;top:16px;right:19px;color:var(--accent);font-size:21px;line-height:1}
+.flip:hover{background:var(--paper)}
+.tile{border:1.5px solid var(--comic-stroke);box-shadow:2px 2px var(--comic-stroke);background:var(--card);transition:transform .12s}
+.tile:hover{transform:translateY(-2px);background:var(--paper)}
+.tile.chosen{outline:3px solid #b596f1}
+.tile.solved{background:#efdcff;color:#51357b;border-color:#997ac8;box-shadow:none}
+.diagram{border:1px dashed var(--line);background:var(--paper)}
+.node{background:#e9ddff;color:#4a316c;border:1.5px solid #9d83cc;box-shadow:2px 2px #c6b5df}
+.correct-pill{background:#e5edbb;color:#435222;border-color:#9fa971}
+.review-pill{background:#ffe6b3;color:#775221;border-color:#e2bb70}
+#toast{background:#292238;color:#ffdf8f;border:1px solid #d2aee9;box-shadow:3px 3px #ac88e6}
+.check{accent-color:#a586dc}
+.sourcebox{border-color:var(--line)}
+footer{border-color:var(--line)}
+@media(max-width:1120px){#sidebar{width:205px}.workspace{margin-left:205px}.comic-hero{padding:24px 21px}.comic-hero h1{font-size:clamp(3rem,6.1vw,4.8rem)}.dashboard-metrics .meter-card{padding:11px;gap:7px}.meter-icon{width:30px;height:30px;font-size:15px}.dashboard-metrics .stat{font-size:23px}}
+@media(max-width:760px){#sidebar{width:245px;transform:translateX(-100%)}#sidebar.open{transform:translateX(0);box-shadow:0 0 0 100vmax #21192d88}.workspace{margin-left:0}main{padding:17px 13px 38px}.desk-kicker{font-size:9px;letter-spacing:.085em}.desk-kicker span:last-child{display:none}.comic-hero{grid-template-columns:1fr;padding:20px 16px 14px;margin-right:4px;gap:3px;box-shadow:4px 4px #292238}.comic-hero h1{font-size:clamp(3.7rem,12vw,5.1rem);margin:17px 0 13px}.comic-hero p{font-size:13px}.comic-art{padding:4px 0 7px;max-width:440px;width:100%;justify-self:center}.hero-comic{max-width:400px}.hero-issue{font-size:8px;right:7px;bottom:7px;padding:5px 6px}.comic-buttons{gap:8px}.comic-buttons button{font-size:11px;padding:9px 10px}.resume-strip{margin-top:13px;padding-top:9px}.dashboard-metrics{gap:9px}.dashboard-metrics .meter-card{padding:11px 9px;gap:7px;min-width:0}.meter-icon{width:30px;height:30px;font-size:16px}.dashboard-metrics .stat{font-size:22px}.dashboard-metrics small{font-size:10px}.unit-section-title{margin-top:22px;gap:8px}.unit-section-title h2{font-size:1.45rem}.comic-ticket{font-size:8px;padding:5px 6px}.unit-grid{gap:13px}.quest-banner{min-height:95px}.unit-doodle{width:72px;height:66px}.quest-joke{font-size:13px}.quest-content h3{min-height:unset;font-size:1.12rem}.quest-content{padding:14px}.quest-content .unit-actions button{flex:1;font-size:12px;padding:9px}.reading-sheet,.reader-outline,.margin-card{box-shadow:none}.reader-heading h1{font-size:1.85rem}.reading-body{font-size:var(--readsize,16px)}}
+@media(max-width:360px){.comic-hero h1{font-size:3.35rem}.comic-buttons button{flex:1}.hero-issue{display:none}.meter-icon{display:none}}
+@media(prefers-reduced-motion:reduce){.hero-comic{animation:none}.quest-card,button,.tile{transition:none;transform:none!important}}
